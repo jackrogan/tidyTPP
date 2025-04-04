@@ -1,0 +1,93 @@
+#' Import TPP data from Spectronaut report into tidier tibble format.
+#'
+#' @param datafile Character. Specify a Spectronaut .csv report filename
+#'  containing the protein quantity data.
+#' @param config  Either a character, specifying the file name of a text .csv
+#'  file with experiment configuration, or literal data that can be passed to
+#'  [readr::read_csv]. This should take the form of a table with the
+#'  column names \emph{Experiment}, \emph{Condition}, \emph{Replicate} and
+#'  \emph{Temp}.
+#' @param path Character. Optionally, the path to a directory containing the
+#'  data and configuration files. If given, this will be appended to both paths.
+#' @param silent Boolean. If true, will run silently, without console output.
+#'
+#' @return A tibble giving the TPP protein quantity data relative to the lowest
+#'  temperature, \eqn{T_1}, as \emph{rel_quantity}, in a tidier format: 1 row
+#'  per protein observation.
+#' @export
+import_spectronaut <- function(datafile,
+                               config,
+                               path = NULL,
+                               silent = FALSE){
+
+  if(!silent){
+    cat("--------------------\n")
+    cat("Spectronaut Import\n")
+    cat("--------------------\n")
+    cat("Read in:\n")
+    cat(datafile, "\n")
+    cat(config, "\n")
+  }
+
+  # If path is given, add to input names
+  # (include "/" if not given)
+  if(!is.null(path)){
+    path <- sub("([^/])$", "\\1/", path)
+    datafile <- paste0(path, datafile)
+    config <- paste0(path, config)
+  }
+
+  # Check for missing files, import data
+  if(!file.exists(datafile)) {
+    cat("Can't find datafile:\n")
+    cat(datafile, "\n")
+    return(NULL)
+  }
+  if(!file.exists(config)) {
+    cat("Can't find datafile:\n")
+    cat(config, "\n")
+    return(NULL)
+  }
+  SN_data_tbl <- readr::read_csv(datafile, show_col_types = FALSE)
+  config_tbl <- readr::read_csv(config, col_types = "cccn", show_col_types = FALSE)
+
+  # Required columns:
+  # Protein Group, Gene, Peptide Precursor, PG raw quantities
+  SN_data_tbl <-
+    dplyr::select(SN_data_tbl,
+                  PG.ProteinGroups,
+                  PG.Genes,
+                  EG.PrecursorId,
+                  dplyr::contains("raw.PG.Quantity")) |>
+    dplyr::distinct() |>
+    # Separate Precursor sequence, charge
+    tidyr::separate_wider_delim(cols = EG.PrecursorId,
+                                delim = ".",
+                                names = c("Pep.Sequence", "Pep.Charge")) |>
+    # Create peptide match and PSM match count
+    dplyr::group_by(PG.ProteinGroups, PG.Genes) |>
+    dplyr::summarise(Pep.N = length(unique(Pep.Sequence)),
+                     Match.N = n(),
+                     across(contains("raw.PG.Quantity"), ~ utils::head(.x, 1))) |>
+    # Remove any data missing in any experiment
+    tidyr::drop_na() |>
+    # Combine config and data tibbles to give temp-quantity pairs
+    tidyr::pivot_longer(cols = contains("raw.PG.Quantity"),
+                        names_to = "Experiment",
+                        values_to = "raw_quantity") |>
+    dplyr::mutate(Experiment = sub("^\\[(\\d+)\\].*$", "\\1", Experiment)) |>
+    dplyr::full_join(config_tbl, by = "Experiment") |>
+    dplyr::group_by(PG.ProteinGroups, PG.Genes, Condition, Replicate) |>
+    # Get T1 temperature and generate relative quantity column
+    dplyr::mutate(T1_quantity = utils::head(raw_quantity, 1),
+                  rel_quantity = raw_quantity/T1_quantity) |>
+    dplyr::ungroup()
+
+
+  if(!silent){ cat("--------------------\n") }
+
+  dplyr::select(SN_data_tbl,
+                PG.ProteinGroups, PG.Genes, Pep.N, Match.N,
+                Experiment, Condition, Replicate, Temp,
+                rel_quantity, raw_quantity, T1_quantity)
+}

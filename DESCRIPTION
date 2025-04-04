@@ -1,11 +1,19 @@
 Package: tidyTPP
-Title: What the Package Does (One Line, Title Case)
+Title: A Thermal Protein Profiling Analysis Pipeline
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Jack", "Rogan", , "jr2020@cam.ac.uk", role = c("aut", "cre"))
+Description: A pipeline to analyse Thermal Protein Profiling (TPP) proteomics
+    experiments using tibbles to pass data through the pipeline. Import tools 
+    gather results data from multiple proteomics software analyses and 
+    methods - including DDA, DIA, TMT and label-free quantification. 
+    Visualisation tools allow prediction and plotting of melting point curves 
+    for TPP-TR data from any point in the pipeline, and output data from all 
+    tools is easily accessed, displayed and exported in a tidy format.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5)
+LazyData: true
