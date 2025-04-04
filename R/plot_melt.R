@@ -70,7 +70,7 @@ plot_melt <- function(data,
   }
   if(to_plot) plot(melting_plot)
   if(!is.null(to_save)) {
-    ggsave(to_save, melting_plot)
+    ggplot2::ggsave(to_save, melting_plot)
   }
 
   data

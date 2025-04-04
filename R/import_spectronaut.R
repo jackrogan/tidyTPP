@@ -15,6 +15,8 @@
 #'  temperature, \eqn{T_1}, as \emph{rel_quantity}, in a tidier format: 1 row
 #'  per protein observation.
 #' @export
+#'
+#' @importFrom rlang .data
 import_spectronaut <- function(datafile,
                                config,
                                path = NULL,
@@ -62,42 +64,43 @@ import_spectronaut <- function(datafile,
   }
   SN_data_tbl <- readr::read_csv(datafile, show_col_types = FALSE)
   config_tbl <- readr::read_csv(config, col_types = "cccn", show_col_types = FALSE)
-
+  print(SN_data_tbl)
   # Required columns:
   # Protein Group, Gene, Peptide Precursor, PG raw quantities
   SN_data_tbl <-
     dplyr::select(SN_data_tbl,
-                  Protein_ID = PG.Genes,
-                  EG.PrecursorId,
+                  'Protein_ID' = 'PG.Genes',
+                  'EG.PrecursorId',
                   dplyr::contains("raw.PG.Quantity")) |>
     dplyr::distinct() |>
     # Separate Precursor sequence, charge
-    tidyr::separate_wider_delim(cols = EG.PrecursorId,
+    tidyr::separate_wider_delim(cols = 'EG.PrecursorId',
                                 delim = ".",
                                 names = c("Pep.Sequence", "Pep.Charge")) |>
     # Create peptide match and PSM match count
-    dplyr::group_by(Protein_ID) |>
-    dplyr::summarise(Pep_N = length(unique(Pep.Sequence)),
-                     Match_N = dplyr::n(),
-                     across(contains("raw.PG.Quantity"), ~ utils::head(.x, 1))) |>
+    dplyr::group_by(.data$Protein_ID) |>
+    dplyr::summarise('Pep_N' = length(unique(.data$Pep.Sequence)),
+                     'Match_N' = dplyr::n(),
+                     dplyr::across(dplyr::contains("raw.PG.Quantity"),
+                                   ~ utils::head(.x, 1))) |>
     # Remove any data missing in any experiment
     tidyr::drop_na() |>
     # Combine config and data tibbles to give temp-quantity pairs
-    tidyr::pivot_longer(cols = contains("raw.PG.Quantity"),
+    tidyr::pivot_longer(cols = dplyr::contains("raw.PG.Quantity"),
                         names_to = "Experiment",
                         values_to = "raw_quantity") |>
-    dplyr::mutate(Experiment = sub("^\\[(\\d+)\\].*$", "\\1", Experiment)) |>
+    dplyr::mutate('Experiment' = sub("^\\[(\\d+)\\].*$", "\\1", .data$Experiment)) |>
     dplyr::full_join(config_tbl, by = "Experiment") |>
-    dplyr::group_by(Protein_ID, Condition, Replicate) |>
+    dplyr::group_by(.data$Protein_ID, .data$Condition, .data$Replicate) |>
     # Get T1 temperature and generate relative quantity column
-    dplyr::mutate(T1_quantity = utils::head(raw_quantity, 1),
-                  rel_quantity = raw_quantity/T1_quantity) |>
-    dplyr::ungroup()
+    dplyr::mutate('T1_quantity' = utils::head(.data$raw_quantity, 1),
+                  'rel_quantity' = .data$raw_quantity / .data$T1_quantity) |>
+    dplyr::ungroup() |> print()
 
 
   if(!silent){ cat("--------------------\n") }
 
   dplyr::select(SN_data_tbl,
-                Protein_ID, Pep_N, Match_N, Condition,
-                Replicate, Temp, rel_quantity, raw_quantity)
+                'Protein_ID', 'Pep_N', 'Match_N', 'Condition',
+                'Replicate', 'Temp', 'rel_quantity', 'raw_quantity')
 }
