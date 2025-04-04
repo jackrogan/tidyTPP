@@ -25,28 +25,40 @@ import_spectronaut <- function(datafile,
     cat("Spectronaut Import\n")
     cat("--------------------\n")
     cat("Read in:\n")
-    cat(datafile, "\n")
-    cat(config, "\n")
+    if(is.data.frame(datafile)){
+      cat("Spectronaut report table supplied\n")
+    } else{
+      cat(datafile, "\n")
+    }
+    if(is.data.frame(config)){
+      cat("Configuration table supplied\n")
+    } else{
+      cat(config, "\n")
+    }
   }
 
   # If path is given, add to input names
   # (include "/" if not given)
   if(!is.null(path)){
     path <- sub("([^/])$", "\\1/", path)
-    datafile <- paste0(path, datafile)
-    config <- paste0(path, config)
+    if(!is.data.frame(datafile)) datafile <- paste0(path, datafile)
+    if(!is.data.frame(config)) config <- paste0(path, config)
   }
 
   # Check for missing files, import data
-  if(!file.exists(datafile)) {
-    cat("Can't find datafile:\n")
-    cat(datafile, "\n")
-    return(NULL)
+  if(!is.data.frame(datafile)){
+    if(!file.exists(datafile)) {
+      cat("Can't find datafile:\n")
+      cat(datafile, "\n")
+      return(NULL)
+    }
   }
-  if(!file.exists(config)) {
-    cat("Can't find datafile:\n")
-    cat(config, "\n")
-    return(NULL)
+  if(!is.data.frame(config)){
+    if(!file.exists(config)) {
+      cat("Can't find config:\n")
+      cat(config, "\n")
+      return(NULL)
+    }
   }
   SN_data_tbl <- readr::read_csv(datafile, show_col_types = FALSE)
   config_tbl <- readr::read_csv(config, col_types = "cccn", show_col_types = FALSE)
@@ -55,8 +67,7 @@ import_spectronaut <- function(datafile,
   # Protein Group, Gene, Peptide Precursor, PG raw quantities
   SN_data_tbl <-
     dplyr::select(SN_data_tbl,
-                  PG.ProteinGroups,
-                  PG.Genes,
+                  Protein_ID = PG.Genes,
                   EG.PrecursorId,
                   dplyr::contains("raw.PG.Quantity")) |>
     dplyr::distinct() |>
@@ -65,9 +76,9 @@ import_spectronaut <- function(datafile,
                                 delim = ".",
                                 names = c("Pep.Sequence", "Pep.Charge")) |>
     # Create peptide match and PSM match count
-    dplyr::group_by(PG.ProteinGroups, PG.Genes) |>
-    dplyr::summarise(Pep.N = length(unique(Pep.Sequence)),
-                     Match.N = n(),
+    dplyr::group_by(Protein_ID) |>
+    dplyr::summarise(Pep_N = length(unique(Pep.Sequence)),
+                     Match_N = dplyr::n(),
                      across(contains("raw.PG.Quantity"), ~ utils::head(.x, 1))) |>
     # Remove any data missing in any experiment
     tidyr::drop_na() |>
@@ -77,7 +88,7 @@ import_spectronaut <- function(datafile,
                         values_to = "raw_quantity") |>
     dplyr::mutate(Experiment = sub("^\\[(\\d+)\\].*$", "\\1", Experiment)) |>
     dplyr::full_join(config_tbl, by = "Experiment") |>
-    dplyr::group_by(PG.ProteinGroups, PG.Genes, Condition, Replicate) |>
+    dplyr::group_by(Protein_ID, Condition, Replicate) |>
     # Get T1 temperature and generate relative quantity column
     dplyr::mutate(T1_quantity = utils::head(raw_quantity, 1),
                   rel_quantity = raw_quantity/T1_quantity) |>
@@ -87,7 +98,6 @@ import_spectronaut <- function(datafile,
   if(!silent){ cat("--------------------\n") }
 
   dplyr::select(SN_data_tbl,
-                PG.ProteinGroups, PG.Genes, Pep.N, Match.N,
-                Experiment, Condition, Replicate, Temp,
-                rel_quantity, raw_quantity, T1_quantity)
+                Protein_ID, Pep_N, Match_N, Condition,
+                Replicate, Temp, rel_quantity, raw_quantity)
 }

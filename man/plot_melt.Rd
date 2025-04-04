@@ -53,7 +53,7 @@ plot_melt(x, x_parameters)
 plot_melt(
   x,
   x_parameters,
-  to_add_to_ggplot = ggtitle("ATIC", subtitle = "Protein Melting Curve"),
+  to_add_to_ggplot = ggplot2::ggtitle("ATIC", subtitle = "Protein Melting Curve"),
   n_predict = 200,
   annotate = "both",
   facets = FALSE)

@@ -8,10 +8,14 @@
 A data frame with 10 rows and 5 variables:
 \describe{
 \item{Protein_ID}{Gene name identifying the protein}
+\item{Pep_N}{Number of unique peptides identified for protein}
+\item{Match_N}{Number of unique peptide spectral matches (PSMs)
+found for protein}
 \item{Condition}{Treatment given to this sample set}
 \item{Replicate}{Replicate number for this sample set}
 \item{Temp}{Experiment temperature in \eqn{\degree C}}
 \item{rel_quantity}{Quantity of protein measured, relative to \eqn{T_1}}
+\item{raw_quantity}{Raw quantity of protein measured}
 }
 }
 \usage{
