@@ -10,14 +10,13 @@ A data frame with 4 rows and 10 variables:
 \item{Protein_ID}{Gene name identifying the protein}
 \item{Condition}{Treatment given to this sample set}
 \item{Replicate}{Replicate number for this sample set}
-\item{\code{a}}{parameter \code{a} from sigmoidal curve fitting}
-\item{\code{b}}{parameter \code{b} from sigmoidal curve fitting}
-\item{melt_point}{melting point, calculated as the model temperature
+\item{\code{a}}{Parameter \code{a} from sigmoidal curve fitting}
+\item{\code{b}}{Parameter \code{b} from sigmoidal curve fitting}
+\item{melt_point}{Melting point, calculated as the model temperature
 resulting in 50 \% of the protein destabilised}
-\item{infl_point}{inflection point, calculated as the model temperature
+\item{infl_point}{Inflection point, calculated as the model temperature
 for which \eqn{f''(T_{infl}) = 0 }}
-\item{slope}{sigmoidal curve slope, calculated as the model temperature
-for which \eqn{f'(T_{infl}) }}
+\item{slope}{Sigmoidal curve slope, calculated as \eqn{f'(T_{infl}) }}
 \item{plateau}{The plateau of the modeled sigmoidal curve}
 \item{R_sq}{\eqn{R^2} for the fitted sigmoidal curve}
 }

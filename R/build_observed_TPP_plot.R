@@ -72,31 +72,21 @@ build_observed_TPP_plot <- function(data,
 ){
   # Plot observed TPP data Points
   colnames(data)[colnames(data) == quan_column] <- "quantity"
-
-  # Deal with missing or present columns
-  get_aesthetic_column <- function(aes_name){
-    if(any(colnames(data) == aes_name)) {
-      aes_name <- data[[aes_name]]
-    } else{
-      aes_name <- NULL
-    }
-  }
-  colour_column_aes <- get_aesthetic_column(colour_column)
-  shape_column_aes <- get_aesthetic_column(shape_column)
-
   melt_plot <-
-    ggplot2::ggplot(data,
-                    ggplot2::aes(x = .data$Temp, y = .data$quantity,
-                                 colour = colour_column_aes,
-                                 shape = shape_column_aes)) +
+    ggplot2::ggplot(data, ggplot2::aes(x = .data$Temp, y = .data$quantity))
+  if(!is.null(colour_column)){
+    melt_plot <- melt_plot + ggplot2::aes(colour = .data[[colour_column]])
+  }
+  if(!is.null(shape_column)){
+    melt_plot <- melt_plot + ggplot2::aes(shape = .data[[shape_column]])
+  }
+  melt_plot <- melt_plot +
     ggplot2::geom_point() +
     ggplot2::labs(title = "Protein Melting Curve",
                   x = "Temperature / \u00B0C",
-                  y = "Fraction Non-denatured",
-                  colour = colour_column,
-                  shape = shape_column) +
+                  y = "Fraction Non-denatured") +
     ggplot2::scale_shape_discrete(guide = "none")
-  if(is.null(colour_column_aes)) {
+  if(is.null(colour_column)) {
     melt_plot <- melt_plot + ggplot2::scale_colour_discrete(guide = "none")
   }
   melt_plot <- melt_plot + ggplot2::theme_bw()

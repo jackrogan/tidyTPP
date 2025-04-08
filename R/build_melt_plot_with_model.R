@@ -114,17 +114,15 @@ build_melt_plot_with_model <-
     if(!any(colnames(data) == quan_column)) {
       quan_column <- "rel_quantity"
     }
-    # colnames(data)[colnames(data) == quan_column] <- "quantity"
     colnames(predicted_data)[
       colnames(predicted_data) == "model_quantity"] <- "quantity"
 
   # Plot observed data, add predicted curves
   melt_plot <-
-    build_observed_TPP_plot(data,
-                            facets = TRUE,
-                            quan_column = "rel_quantity",
-                            colour_column = "Condition",
-                            shape_column = "Replicate") +
+    build_observed_TPP_plot(data, facets,
+                            quan_column,
+                            colour_column,
+                            shape_column) +
     ggplot2::geom_line(data = predicted_data)
 
   # Add rules on plot for melting points if required (default yes)
