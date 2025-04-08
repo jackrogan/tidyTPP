@@ -64,7 +64,6 @@ import_spectronaut <- function(datafile,
   }
   SN_data_tbl <- readr::read_csv(datafile, show_col_types = FALSE)
   config_tbl <- readr::read_csv(config, col_types = "cccn", show_col_types = FALSE)
-  print(SN_data_tbl)
   # Required columns:
   # Protein Group, Gene, Peptide Precursor, PG raw quantities
   SN_data_tbl <-
@@ -95,7 +94,7 @@ import_spectronaut <- function(datafile,
     # Get T1 temperature and generate relative quantity column
     dplyr::mutate('T1_quantity' = utils::head(.data$raw_quantity, 1),
                   'rel_quantity' = .data$raw_quantity / .data$T1_quantity) |>
-    dplyr::ungroup() |> print()
+    dplyr::ungroup()
 
 
   if(!silent){ cat("--------------------\n") }
