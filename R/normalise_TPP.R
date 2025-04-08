@@ -57,6 +57,14 @@ normalise_TPP <- function(TPP_tbl,
     Reduce(rbind, x = _) |>
     aggregate(rel_quantity ~ Condition + Replicate + Temp, FUN = median)
 
+  if(to_plot) {
+    median_tbl$Protein_ID <- "Median normP"
+    median_tbl$Experiment <- paste(median_tbl$Condition, median_tbl$Replicate)
+    plot(build_observed_TPP_plot(median_tbl, facets = FALSE) +
+      ggplot2::facet_wrap(ggplot2::vars(.data$Experiment)) +
+      ggplot2::ggtitle("Median normP Melting Curve"))
+  }
+
   # 6. Fit curves to median normP sets.
   median_tbl_list <- split(median_tbl, median_tbl[c("Condition", "Replicate")])
   # TODO

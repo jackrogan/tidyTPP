@@ -49,6 +49,8 @@
 #' @return A `ggplot` object.
 #' @export
 #'
+#' @importFrom rlang .data
+#'
 #' @examples
 #' # Minimal data - ATIC melt curve
 #' x <- quan_data_ATIC
@@ -80,8 +82,7 @@
 #' # however, this can be disabled:
 #' build_melt_plot_with_model(x, x_predicted) +
 #'   ggplot2::scale_shape_discrete()
-#'
-#' @importFrom rlang .data
+
 build_melt_plot_with_model <-
   function(data,
            predicted_data,
@@ -113,22 +114,18 @@ build_melt_plot_with_model <-
     if(!any(colnames(data) == quan_column)) {
       quan_column <- "rel_quantity"
     }
-    colnames(data)[colnames(data) == quan_column] <- "quantity"
+    # colnames(data)[colnames(data) == quan_column] <- "quantity"
     colnames(predicted_data)[
       colnames(predicted_data) == "model_quantity"] <- "quantity"
 
-  # Plot Normalised Points and predicted curves
+  # Plot observed data, add predicted curves
   melt_plot <-
-    ggplot2::ggplot(data,
-                    ggplot2::aes(x = .data$Temp, y = .data$quantity,
-                                 colour = .data[[colour_column]],
-                                 shape = .data[[shape_column]])) +
-    ggplot2::geom_point() +
-    ggplot2::geom_line(data = predicted_data) +
-    ggplot2::labs(title = "Protein Melting Curve",
-         x = "Temperature / \u00B0C", y = "Fraction Non-denatured") +
-    ggplot2::scale_shape_discrete(guide = "none") +
-    ggplot2::theme_bw()
+    build_observed_TPP_plot(data,
+                            facets = TRUE,
+                            quan_column = "rel_quantity",
+                            colour_column = "Condition",
+                            shape_column = "Replicate") +
+    ggplot2::geom_line(data = predicted_data)
 
   # Add rules on plot for melting points if required (default yes)
   if(rules){
@@ -196,13 +193,6 @@ build_melt_plot_with_model <-
                            vjust = 0,
                            show.legend = FALSE)
     }
-  }
-
-  # Facet separate proteins if specified (default yes)
-  if(facets){
-    melt_plot <-
-      melt_plot +
-      ggplot2::facet_wrap(ggplot2::vars(.data$Protein_ID))
   }
 
   melt_plot
