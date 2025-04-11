@@ -55,7 +55,8 @@ normalise_TPP <- function(TPP_tbl,
   median_tbl <-
     lapply(jointP_tbl_list, function(x) x[x$Protein_ID %in% normP,]) |>
     Reduce(rbind, x = _) |>
-    aggregate(rel_quantity ~ Condition + Replicate + Temp, FUN = median)
+    stats::aggregate(rel_quantity ~ Condition + Replicate + Temp,
+                     FUN = stats::median)
 
   if(to_plot) {
     median_tbl$Protein_ID <- "Median normP"

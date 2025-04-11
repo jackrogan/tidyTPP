@@ -28,11 +28,11 @@
 #'  }
 #' @param facets Boolean. Whether to separate facets using \emph{Protein_ID}
 #' @param quan_column Character. The column in `data` and `predicted_data` used
-#' for plot y-values.
+#' for plot y-values
 #' @param colour_column Character. The column in `data` and `predicted_data` used
-#' for plot colour aesthetic.
+#' for plot colour aesthetic
 #' @param shape_column Character. The column in `data` and `predicted_data` used
-#' for plot shape aesthetic.
+#' for plot shape aesthetic
 #'
 #' @return A `ggplot` object.
 #' @export

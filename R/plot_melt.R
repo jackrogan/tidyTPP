@@ -17,7 +17,7 @@
 #' @param to_save Character. If supplied, save plot with [ggsave()]
 #' @param to_add_to_ggplot List. Optional list of further additions to `ggplot`;
 #'  will be added using [+.gg()]
-#' @param ... Additional arguments to be parsed to [predict_melt_curve()] or
+#' @param ... Additional arguments to be passed to [predict_melt_curve()] or
 #' [build_melt_plot_with_model()]
 #'
 #' @return A data frame or [tibble] given in `data`

@@ -26,7 +26,7 @@ plot_melt(
 \item{to_add_to_ggplot}{List. Optional list of further additions to \code{ggplot};
 will be added using \code{\link[=+.gg]{+.gg()}}}
 
-\item{...}{Additional arguments to be parsed to \code{\link[=predict_melt_curve]{predict_melt_curve()}} or
+\item{...}{Additional arguments to be passed to \code{\link[=predict_melt_curve]{predict_melt_curve()}} or
 \code{\link[=build_melt_plot_with_model]{build_melt_plot_with_model()}}}
 }
 \value{

@@ -57,13 +57,13 @@ but defaults will be supplied if they are missing.}
 \item{facets}{Boolean. Whether to separate facets using \emph{Protein_ID}}
 
 \item{quan_column}{Character. The column in \code{data} and \code{predicted_data} used
-for plot y-values.}
+for plot y-values}
 
 \item{colour_column}{Character. The column in \code{data} and \code{predicted_data} used
-for plot colour aesthetic.}
+for plot colour aesthetic}
 
 \item{shape_column}{Character. The column in \code{data} and \code{predicted_data} used
-for plot shape aesthetic.}
+for plot shape aesthetic}
 }
 \value{
 A \code{ggplot} object.
