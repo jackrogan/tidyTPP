@@ -4,7 +4,13 @@
 \alias{predict_melt_curve}
 \title{Predict Protein Melting Curve}
 \usage{
-predict_melt_curve(fit_parameters, n_predict = 100, low_T = 37, high_T = 67)
+predict_melt_curve(
+  fit_parameters,
+  n_predict = 100,
+  low_T = 37,
+  high_T = 67,
+  T_seq = NULL
+)
 }
 \arguments{
 \item{fit_parameters}{Parameters for plotting melting curve. Must include at
@@ -14,19 +20,22 @@ minimum \code{plateau}, \code{a}, \code{b}. Accepted formats:
 \item A vector of numeric parameters, of length 3, with the order \code{plateau}, \code{a}, \code{b}.
 \item A model, created using \code{\link[=nls]{nls()}}, from which parameters can be extracted.
 \item A list of \code{\link[=nls]{nls()}} models, from which parameters can be extracted and made
-into a \code{data.frame}.
+into a \code{data.frame}
 }}
 
 \item{n_predict}{An integer, the number of predictions to make per melting point
-curve.}
+curve}
 
-\item{low_T}{A number, the lower temperature limit for predicted curves.}
+\item{low_T}{A number, the lower temperature limit for predicted curves}
 
-\item{high_T}{A number, the upper temperature limit for predicted curves.}
+\item{high_T}{A number, the upper temperature limit for predicted curves}
+
+\item{T_seq}{Optionally, a numeric vector of temperature values to
+predict; overrides \code{n_predict}, \code{low_T} and \code{high_T}}
 }
 \value{
 A \code{tibble} (from \code{\link[=tibble]{tibble()}}) including original \code{data.frame} columns,
-if any, \code{Temp}, and paired \code{model_quantity}.
+if any, \code{Temp}, and paired \code{model_quantity}
 }
 \description{
 Predict Protein Melting Curve

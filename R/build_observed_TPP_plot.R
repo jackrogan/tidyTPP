@@ -33,6 +33,8 @@
 #' for plot colour aesthetic
 #' @param shape_column Character. The column in `data` and `predicted_data` used
 #' for plot shape aesthetic
+#' @param facets_column Character. The column in `data` and `predicted_data` used
+#' for plot facets
 #'
 #' @return A `ggplot` object.
 #' @export
@@ -51,7 +53,8 @@
 #'   data = x,
 #'   quan_column = "rel_quantity",
 #'   colour_column = "Condition",
-#'   shape_column = "Replicate"
+#'   shape_column = "Replicate",
+#'   facets_column = "Protein_ID"
 #'   )
 #'
 #' # Remove facets
@@ -68,7 +71,8 @@ build_observed_TPP_plot <- function(data,
                                     facets = TRUE,
                                     quan_column = "rel_quantity",
                                     colour_column = "Condition",
-                                    shape_column = "Replicate"
+                                    shape_column = "Replicate",
+                                    facets_column = "Protein_ID"
 ){
   # Plot observed TPP data Points
   colnames(data)[colnames(data) == quan_column] <- "quantity"
@@ -95,7 +99,7 @@ build_observed_TPP_plot <- function(data,
   if(facets){
     melt_plot <-
       melt_plot +
-      ggplot2::facet_wrap(ggplot2::vars(.data$Protein_ID))
+      ggplot2::facet_wrap(ggplot2::vars(.data[[facets_column]]))
   }
 
   melt_plot

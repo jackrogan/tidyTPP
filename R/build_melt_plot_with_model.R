@@ -36,7 +36,8 @@
 #'   predicted_data = x_predicted,
 #'   quan_column = "rel_quantity",
 #'   colour_column = "Condition",
-#'   shape_column = "Replicate"
+#'   shape_column = "Replicate",
+#'   facets_column = "Protein_ID"
 #'   )
 #'
 #' # Remove annotations and facets
@@ -62,7 +63,8 @@ build_melt_plot_with_model <-
            facets = TRUE,
            quan_column = "rel_quantity",
            colour_column = "Condition",
-           shape_column = "Replicate"
+           shape_column = "Replicate",
+           facets_column = "Protein_ID"
            ){
 
     # Select default annotation behaviour
@@ -87,13 +89,15 @@ build_melt_plot_with_model <-
     }
     colnames(predicted_data)[
       colnames(predicted_data) == "model_quantity"] <- "quantity"
+    colnames(data)[colnames(data) == quan_column] <- "quantity"
 
   # Plot observed data, add predicted curves
   melt_plot <-
     build_observed_TPP_plot(data, facets,
                             quan_column,
                             colour_column,
-                            shape_column) +
+                            shape_column,
+                            facets_column) +
     ggplot2::geom_line(data = predicted_data)
 
   # Add rules on plot for melting points if required (default yes)
@@ -118,15 +122,24 @@ build_melt_plot_with_model <-
   if(any(annotate == c("R_sq", "melt_point", "both"))){
     max_q <- max(data$quantity)
     annotation_data <-
-      predicted_data[c("Condition", "Replicate", "R_sq", "melt_point")]
+      predicted_data[c(unique(c(colour_column, shape_column, facets_column)),
+                       "R_sq", "melt_point")]
     annotation_data <- unique(annotation_data)
     annotation_data$Experiment <-
       as.factor(paste0(annotation_data$Condition,
                        '"~"',
                        annotation_data$Replicate))
     annotation_data$Exp_no <- as.integer(annotation_data$Experiment)
+    annotation_data_list <-
+      split(annotation_data, as.formula(paste("~", facets_column)))
+    minimise_exp_no <- function(x) {
+      x$Exp_no <- x$Exp_no - min(x$Exp_no)
+      x
+    }
+    annotation_data_list <- lapply(annotation_data_list, minimise_exp_no)
+    annotation_data <- Reduce(rbind, annotation_data_list)
 
-    if(any(annotate == c("R_sq", "both"))){
+   if(any(annotate == c("R_sq", "both"))){
       annotation_data$R_sq_label <-
         paste0('R^2~("', annotation_data$Experiment,
                '"):~', sprintf('"%1.3f"', signif(annotation_data$R_sq, 3)))
@@ -140,6 +153,7 @@ build_melt_plot_with_model <-
                                         label = .data$R_sq_label),
                            parse = TRUE,
                            hjust = 1,
+                           vjust = 0.7,
                            show.legend = FALSE)
     }
 

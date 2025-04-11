@@ -6,14 +6,16 @@
 #'  * A vector of numeric parameters, of length 3, with the order `plateau`, `a`, `b`.
 #'  * A model, created using [nls()], from which parameters can be extracted.
 #'  * A list of [nls()] models, from which parameters can be extracted and made
-#'  into a `data.frame`.
+#'  into a `data.frame`
 #' @param n_predict An integer, the number of predictions to make per melting point
-#'  curve.
-#' @param low_T A number, the lower temperature limit for predicted curves.
-#' @param high_T A number, the upper temperature limit for predicted curves.
+#'  curve
+#' @param low_T A number, the lower temperature limit for predicted curves
+#' @param high_T A number, the upper temperature limit for predicted curves
+#' @param T_seq Optionally, a numeric vector of temperature values to
+#'  predict; overrides `n_predict`, `low_T` and `high_T`
 #'
 #' @return A `tibble` (from [tibble()]) including original `data.frame` columns,
-#'  if any, `Temp`, and paired `model_quantity`.
+#'  if any, `Temp`, and paired `model_quantity`
 #' @export
 #'
 #' @examples
@@ -22,7 +24,11 @@
 #'
 #' predict_melt_curve(x, n_predict = 100, low_T = 36, high_T = 66)
 predict_melt_curve <-
-  function(fit_parameters, n_predict = 100, low_T = 37, high_T = 67){
+  function(fit_parameters,
+           n_predict = 100,
+           low_T = 37,
+           high_T = 67,
+           T_seq = NULL){
 
     # Determine fit parameter type, get data.frame version
     if(is.data.frame(fit_parameters)) {
@@ -49,9 +55,14 @@ predict_melt_curve <-
 
     # Generate modeled values
     n_models <- nrow(parameter_tbl)
-    parameter_tbl <- parameter_tbl[rep(1:n_models, each = n_predict),]
-    parameter_tbl$Temp <-
-      rep(seq(low_T, high_T, length.out = n_predict), times = n_models)
+    if(!is.null(T_seq)){
+      parameter_tbl <- parameter_tbl[rep(1:n_models, each = length(T_seq)),]
+      parameter_tbl$Temp <- rep(T_seq, times = n_models)
+    } else{
+      parameter_tbl <- parameter_tbl[rep(1:n_models, each = n_predict),]
+      parameter_tbl$Temp <-
+        rep(seq(low_T, high_T, length.out = n_predict), times = n_models)
+    }
     parameter_tbl$model_quantity <-
       ((1 - parameter_tbl$plateau) /
          (1 + exp(parameter_tbl$b - (parameter_tbl$a / parameter_tbl$Temp)))) +

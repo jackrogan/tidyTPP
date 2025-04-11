@@ -9,7 +9,8 @@ build_observed_TPP_plot(
   facets = TRUE,
   quan_column = "rel_quantity",
   colour_column = "Condition",
-  shape_column = "Replicate"
+  shape_column = "Replicate",
+  facets_column = "Protein_ID"
 )
 }
 \arguments{
@@ -45,6 +46,9 @@ for plot colour aesthetic}
 
 \item{shape_column}{Character. The column in \code{data} and \code{predicted_data} used
 for plot shape aesthetic}
+
+\item{facets_column}{Character. The column in \code{data} and \code{predicted_data} used
+for plot facets}
 }
 \value{
 A \code{ggplot} object.
@@ -66,7 +70,8 @@ build_observed_TPP_plot(
   data = x,
   quan_column = "rel_quantity",
   colour_column = "Condition",
-  shape_column = "Replicate"
+  shape_column = "Replicate",
+  facets_column = "Protein_ID"
   )
 
 # Remove facets
