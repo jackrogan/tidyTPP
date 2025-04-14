@@ -17,8 +17,7 @@ fit_melt_by_experiment(
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item Experiment temperature in \eqn{\degree C}
-\item Protein quantity measurement corresponding to
-the non-denatured fraction
+\item Protein quantity measurement corresponding to the non-denatured fraction
 }}
 
 \item{experiment_cols}{A character vector of column names, which will be used
@@ -32,7 +31,8 @@ curve fitting over, if less than the maximum number of cores available.
 If \code{max_cores} is 1, then curve fitting will be run serially in
 a single process}
 
-\item{...}{Further arguments to be passed to \code{\link[=nls_multstart]{nls_multstart()}}}
+\item{...}{Further arguments to be passed to \code{\link[=fit_melting_curve]{fit_melting_curve()}} and
+\code{\link[=nls_multstart]{nls_multstart()}}}
 }
 \value{
 A \code{tibble} with 1 row and \emph{7 + n} variables (where
@@ -57,4 +57,22 @@ identified with supplied columns.
 
 Both serial and parallel processing (using \code{PSOCK}) of the individual curves
 are supported.
+}
+\examples{
+# Minimal data - ATIC melt curve
+x <- quan_data_ATIC
+
+# Fit melting curves - 2-core processing
+fit_melt_by_experiment(x, max_cores = 2)
+
+# Single-core (serial) processing
+fit_melt_by_experiment(x, max_cores = 1)
+
+# Specify experiment details to separate.
+fit_melt_by_experiment(
+  x,
+  experiment_cols = c("Protein_ID", "Condition", "Replicate"),
+  max_cores = 2
+)
+
 }

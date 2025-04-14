@@ -20,8 +20,7 @@ fit_melting_curve(
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item Experiment temperature in \eqn{\degree C}
-\item Protein quantity measurement corresponding to
-the non-denatured fraction
+\item Protein quantity measurement corresponding to the non-denatured fraction
 }}
 
 \item{x_column}{Character. Name for the column containing x-axis
@@ -100,6 +99,6 @@ params
 Schellman J. A., The thermodynamics of solvent exchange.
 \emph{Biopolymers} 34, 1015–1026 (1994)
 
-Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by thermal
-profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
+thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
 }

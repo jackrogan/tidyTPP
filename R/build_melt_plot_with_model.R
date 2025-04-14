@@ -131,7 +131,7 @@ build_melt_plot_with_model <-
                        annotation_data$Replicate))
     annotation_data$Exp_no <- as.integer(annotation_data$Experiment)
     annotation_data_list <-
-      split(annotation_data, as.formula(paste("~", facets_column)))
+      split(annotation_data, stats::as.formula(paste("~", facets_column)))
     minimise_exp_no <- function(x) {
       x$Exp_no <- x$Exp_no - min(x$Exp_no)
       x

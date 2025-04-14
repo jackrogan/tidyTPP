@@ -20,8 +20,7 @@
 #' @param data A data frame (or [tibble]) containing proteomics data from a
 #'  thermal protein profiling (TPP) experiment. This must contain the columns:
 #'  * Experiment temperature in \eqn{\degree C}
-#'  * Protein quantity measurement corresponding to
-#'    the non-denatured fraction
+#'  * Protein quantity measurement corresponding to the non-denatured fraction
 #'
 #' @param x_column Character. Name for the column containing x-axis
 #' (temperature) values in `data`
@@ -54,8 +53,8 @@
 #'  Schellman J. A., The thermodynamics of solvent exchange.
 #'  \emph{Biopolymers} 34, 1015–1026 (1994)
 #'
-#'  Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by thermal
-#'  profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+#'  Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
+#'  thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
 #' @export
 #'
 #' @examples

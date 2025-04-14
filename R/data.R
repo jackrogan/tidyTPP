@@ -34,10 +34,9 @@ MP_data_ATIC <-
 
 #' Quantity data for ATIC Protein Melting Curve
 #'
-#' A dataset containing the parameters generated from fitting a melting curve
-#' to raw  proteomics data (DIA) for the protein ATIC:
+#' A dataset containing raw proteomics data (DIA) for the protein ATIC:
 #'
-#' @format A data frame with 10 rows and 5 variables:
+#' @format A data frame with 40 rows and 5 variables:
 #' \describe{
 #'   \item{Protein_ID}{Gene name identifying the protein}
 #'   \item{Pep_N}{Number of unique peptides identified for protein}
@@ -79,6 +78,25 @@ quan_data_ATIC <-
                         860281.50,  204103.56,   77816.60,   63081.12)
   )
 
+#' Quantity data for 2 Protein Melting Curves
+#'
+#' A dataset containing the raw proteomics data (DIA) for the proteins ATIC and
+#' CFL1:
+#'
+#' @format A data frame with 80 rows and 5 variables:
+#' \describe{
+#'   \item{Protein_ID}{Gene name identifying the protein}
+#'   \item{Pep_N}{Number of unique peptides identified for protein}
+#'   \item{Match_N}{Number of unique peptide spectral matches (PSMs)
+#'    found for protein}
+#'   \item{Condition}{Treatment given to this sample set}
+#'   \item{Replicate}{Replicate number for this sample set}
+#'   \item{Temp}{Experiment temperature in \eqn{\degree C}}
+#'   \item{rel_quantity}{Quantity of protein measured, relative to \eqn{T_1}}
+#'   \item{raw_quantity}{Raw quantity of protein measured}
+#' }
+"quan_data_normP"
+
 # Minimal list of nls models: ATIC Melting curve - control 01
 model_ATIC_1 <-
   quan_data_ATIC[quan_data_ATIC$Condition == "Control" &
@@ -86,3 +104,4 @@ model_ATIC_1 <-
   nls(rel_quantity ~ ((1 - plateau) / (1 + exp(b - (a / Temp)))) + plateau,
       data = _,
       start = list(plateau = 0, a = 600, b = 10))
+

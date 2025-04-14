@@ -16,6 +16,8 @@
 #' curve fitting over, if less than the maximum number of cores available.
 #' If `max_cores` is 1, then curve fitting will be run serially in
 #' a single process
+#' @param ... Further arguments to be passed to [fit_melting_curve()] and
+#' [nls_multstart()]
 #'
 #' @return A `tibble` with 1 row and \emph{7 + n} variables (where
 #' \emph{n} is the length of `experiment_cols`):
@@ -32,6 +34,22 @@
 #' @export
 #'
 #' @examples
+#' # Minimal data - ATIC melt curve
+#' x <- quan_data_ATIC
+#'
+#' # Fit melting curves - 2-core processing
+#' fit_melt_by_experiment(x, max_cores = 2)
+#'
+#' # Single-core (serial) processing
+#' fit_melt_by_experiment(x, max_cores = 1)
+#'
+#' # Specify experiment details to separate.
+#' fit_melt_by_experiment(
+#'   x,
+#'   experiment_cols = c("Protein_ID", "Condition", "Replicate"),
+#'   max_cores = 2
+#' )
+#'
 fit_melt_by_experiment <-
   function(data,
            experiment_cols = c("Protein_ID", "Condition", "Replicate"),
@@ -45,7 +63,7 @@ fit_melt_by_experiment <-
     # Supplying null values to split should result in not splitting
     if(length(experiment_cols) != 0){
       expr_cols <- paste("~", paste(experiment_cols, collapse = " + "))
-      data_sep <- split(data, as.formula(expr_cols))
+      data_sep <- split(data, stats::as.formula(expr_cols))
     } else {
       data_sep <- list(data)
     }
@@ -60,7 +78,7 @@ fit_melt_by_experiment <-
                        "silent" = silent),
                        dots))
       if(!is.null(params_x)) {
-        params_x <- cbind(head(data_sep[[x]][experiment_cols], 1), params_x)
+        params_x <- cbind(data_sep[[x]][experiment_cols][1,], params_x)
       }
       params_x
     }
@@ -88,8 +106,7 @@ fit_melt_by_experiment <-
         "silent",
         "dots",
         "data_sep",
-        "total",
-        "time_elapsed"
+        "total"
       ),
       envir = environment())
 

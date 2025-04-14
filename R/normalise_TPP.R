@@ -1,12 +1,89 @@
-# Normalise TPP data according to Savitsky 2014
-# Return (normalised) tidy tibble
+#' Normalise TPP-TR Data
+#'
+#' @description
+#'  `normalise_TPP()` transforms \emph{Thermal Protein Profiling} (TPP) relative
+#'  intensity data, normalising against fitted median melting curves, as
+#'  described by Savitsky \emph{et al.} 2014:
+#'  * The set of proteins observed in all experimental groups, \emph{jointP}, is
+#'    identified.
+#'  * A subset of proteins is identified, \emph{normP}, with a clear \eqn{T_m}
+#'    ~ \eqn{56 \degree C} for each experimental group, and the largest
+#'    \emph{normP} used.
+#'  * Median fold-change values over all proteins in \emph{normP} are calculated
+#'    for each experiment, at each temperature point.
+#'  * Melting curves are fitted, and the curve with the best \eqn{R^2} used as
+#'    the normal model.
+#'  * A correction factor is calculated for each median fold-change in order to
+#'    coincide with the best-fitting curve.
+#'  * These correction factors are applied to all the protein measurements in the
+#'    respective experimental groups.
+#'
+#' @inheritParams plot_melt
+#' @inheritParams fit_melting_curve
+#' @param TPP_tbl A data frame (or [tibble]) containing proteomics data from a
+#'  thermal protein profiling (TPP) experiment. This must contain the columns:
+#'  * Experiment temperature in \eqn{\degree C}
+#'  * Protein quantity measurement corresponding to the non-denatured fraction
+#' @param quality_filter A data.frame containing the information needed to build
+#' an initial quantity filter. Columns must be \emph{col}, \emph{lower} and
+#' \emph{upper}. Default:
+#'
+#'  | col          | lower         | upper        |
+#'  | ------------ | -------------:| ------------:|
+#'  | Pep_N        | 2             | Inf          |
+#'
+#'  Resulting in filtering for number of detected peptides per protein
+#'  \emph{Pep_N} \eqn{\geq 2}
+#' @param norm_subset_filter A data.frame containing the information needed to
+#'  build the protein filter for normP. Columns must be \emph{Temp}, \emph{lower}
+#'  and \emph{upper}, \emph{e.g}:
+#'
+#'  | Temp         | lower         | upper        |
+#'  | ------------:| -------------:| ------------:|
+#'  | 56           | 0.4           | 0.6          |
+#'  | 63           | -Inf          | 0.3          |
+#'  | 67           | -Inf          | 0.2          |
+#'
+#'  If no table is given, one will be generated based on the one above, using
+#'  the closest temperature points to 56, 63, and 67 \eqn{\degree C},
+#'  respectively
+#' @param quantity_column Character. Name for the column containing
+#' protein quantity values in `TPP_tbl`
+#'
+#' @return A `tibble`, as given in TPP_tbl, with the quantity values
+#' (from `quantity_column`) replaced with normalised quantities, and an
+#' additional `norm_coefficients` column
+#'
+#' @references
+#'  Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
+#'  thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+#'
+#' @export
+#'
+#' @examples
+#' # Minimal data - two-protein melt curve
+#' x <- quan_data_normP
+#'
+#' # Normalise data
+#' normalise_TPP(x)
+#'
+#' # Plot normalisation curves
+#' normalise_TPP(x, to_plot = TRUE)
+#'
+#' # Filter proteins to >= 3 observed peptides
+#' normalise_TPP(
+#'   x,
+#'   quality_filter = data.frame(col = "Pep_N", lower = 3, upper = Inf)
+#' )
+#'
+
 
 normalise_TPP <- function(TPP_tbl,
                           to_plot = FALSE,
                           to_save = NULL,
                           quality_filter = NULL,
                           norm_subset_filter = NULL,
-                          quantity_column = NULL,
+                          quantity_column = "rel_quantity",
                           silent = FALSE){
 
   if(!silent){
@@ -14,12 +91,25 @@ normalise_TPP <- function(TPP_tbl,
     cat("TPP Normalisation\n")
     cat("--------------------\n")
   }
-
   if(is.null(quality_filter)) quality_filter <- get_npeptide_quality_filter()
-  print(quality_filter)
+  if(!silent){
+    cat("Quality Criteria:\n")
+    print(quality_filter)
+  }
+  if("quantity" %in% colnames(TPP_tbl) & quantity_column != "quantity") {
+    colnames(TPP_tbl)[colnames(TPP_tbl) == "quantity"] <- "quan_renamed"
+  }
+  colnames(TPP_tbl)[colnames(TPP_tbl) == quantity_column] <- "quantity"
+
   TPP_temps <- unique(TPP_tbl$Temp)
+
   # 1. Apply filter criteria - must have 2+ peptide matches
-  TPP_tbl <- TPP_tbl[TPP_tbl$Pep_N > 1,]
+  if(nrow(quality_filter) > 0){
+    for(i in 1:nrow(quality_filter)){
+      TPP_tbl <- filter_from_criterion(TPP_tbl, quality_filter[i,])
+    }
+  }
+
   # 2. Find jointP - proteins present in all conditions
   jointP_tbl_list <-
     split(TPP_tbl, TPP_tbl[c("Condition", "Replicate")])
@@ -30,7 +120,7 @@ normalise_TPP <- function(TPP_tbl,
   jointP_tbl_list <-
     lapply(jointP_tbl_list, function(x) x[x$Protein_ID %in% jointP,])
 
-  if(!silent) cat("jointP contains", length(jointP), "Proteins.\n")
+  if(!silent) cat("\njointP contains", length(jointP), "Proteins.\n")
 
   # 3. Filter to fold-change selection
   if(is.null(norm_subset_filter)) {
@@ -58,7 +148,7 @@ normalise_TPP <- function(TPP_tbl,
   median_tbl <-
     lapply(jointP_tbl_list, function(x) x[x$Protein_ID %in% normP,]) |>
     Reduce(rbind, x = _) |>
-    stats::aggregate(rel_quantity ~ Condition + Replicate + Temp,
+    stats::aggregate(quantity ~ Condition + Replicate + Temp,
                      FUN = stats::median)
 
   # 6. Fit curves to median normP sets.
@@ -69,6 +159,7 @@ normalise_TPP <- function(TPP_tbl,
   norm_fit_tbl <-
     fit_melt_by_experiment(median_tbl,
                            experiment_cols = c("Condition", "Replicate"),
+                           y_column = "quantity",
                            max_cores = 1)
 
   # Plot normalisation curves
@@ -107,18 +198,24 @@ normalise_TPP <- function(TPP_tbl,
   model_median_tbl <- model_median_tbl[,c("Temp", "model_quantity")]
   median_tbl <- merge(median_tbl, model_median_tbl)
   median_tbl$norm_coefficient <-
-    median_tbl$model_quantity / median_tbl$rel_quantity
+    median_tbl$model_quantity / median_tbl$quantity
   coeff_tbl <- median_tbl[,c("Condition", "Replicate", "Temp", "norm_coefficient")]
 
 
   # 9. Normalise all proteins
   TPP_tbl <- merge(TPP_tbl, coeff_tbl)
-  TPP_tbl$rel_quantity <- TPP_tbl$rel_quantity * TPP_tbl$norm_coefficient
+  TPP_tbl$quantity <- TPP_tbl$quantity * TPP_tbl$norm_coefficient
 
   if(!silent){
     cat("--------------------\n")
     cat(nrow(TPP_tbl) / nrow(coeff_tbl), "proteins normalised\n")
     cat("--------------------\n")
+  }
+
+
+  colnames(TPP_tbl)[colnames(TPP_tbl) == "quantity"] <- quantity_column
+  if("quan_renamed" %in% colnames(TPP_tbl)){
+    colnames(TPP_data)[colnames(TPP_tbl) == "quan_renamed"] <- "quantity"
   }
 
   tibble::as_tibble(TPP_tbl)
@@ -138,7 +235,7 @@ get_normP_filter_tbl <- function(data_temps = NULL){
   filter_tbl <-
     data.frame(Temp = used_temps,
                lower = c(0.4, -Inf, -Inf),
-               higher = c (0.6, 0.3, 0.2))
+               upper = c (0.6, 0.3, 0.2))
 }
 
 get_npeptide_quality_filter <- function(){
@@ -149,12 +246,18 @@ get_npeptide_quality_filter <- function(){
 filter_to_normP <- function(x_tbl, filter){
   filter_subset_proteins <- function(sub_no){
     x_tbl[(x_tbl$Temp == filter$Temp[sub_no] &
-             x_tbl$rel_quantity > filter$lower[sub_no] &
-             x_tbl$rel_quantity < filter$higher[sub_no]),] |>
+             x_tbl$quantity > filter$lower[sub_no] &
+             x_tbl$quantity < filter$upper[sub_no]),] |>
       _$Protein_ID |>
       unique()
   }
   x_normP <-
     lapply(1:nrow(filter), filter_subset_proteins) |>
     Reduce(intersect, x = _)
+}
+
+# Filter by individual quality filter table row
+filter_from_criterion <- function(x_tbl, filter_row){
+  x_tbl[(x_tbl[,filter_row$col[[1]]] >= filter_row$lower[[1]] &
+           x_tbl[,filter_row$col[[1]]] < filter_row$upper[[1]]),]
 }
