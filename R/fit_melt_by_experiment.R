@@ -128,7 +128,7 @@ fit_melt_by_experiment <-
     if(!silent) cat(nrow(params), "of", total, "fitted successfully.\n")
 
     time_out <- proc.time() - time_total
-    cat("\nTotal elapsed time:", time_out[["elapsed"]], "s\n")
+    if(!silent) cat("\nTotal elapsed time:", time_out[["elapsed"]], "s\n")
 
     tibble::as_tibble(params)
   }

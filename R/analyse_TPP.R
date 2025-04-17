@@ -1,0 +1,165 @@
+# Analysis function - fit curves and find p-values
+analyse_TPP <-
+  function(TPP_tbl,
+           comparisons = NULL,
+           quantity_column = "rel_quantity",
+           control_name = "Control",
+           silent = FALSE,
+           ...){
+
+  TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
+
+  if(!silent){
+    cat("--------------------\n")
+    cat("TPP Analysis\n")
+    cat("--------------------\n")
+    cat("Melting curve fit:\n")
+  }
+
+  # Get curve fits
+  fit_tbl <-
+    fit_melt_by_experiment(TPP_tbl, y_column = "quantity", silent = silent, ...)
+
+  if(!silent){
+    cat("--------------------\n")
+    cat("Statistic calculation:\n")
+  }
+
+  # Default comparisons - assumes condition, replicate columns:
+  # non-control vs control, match replicates - TODO  Condition mask
+  if(is.null(comparisons)){
+    conds <- unique(TPP_tbl$Condition)
+    reps <- unique(TPP_tbl$Replicate)
+
+    comparisons <- create_comparisons_tbl(conds, reps, control_name)
+  }
+
+  if(!silent){
+    cat("\nComparisons:\n")
+    print(comparisons)
+  }
+
+  # Add control-vs-control
+  if(length(reps) > 1){
+    controls <- create_control_comparison_tbl(reps, control_name)
+    comparisons <- rbind(comparisons, controls)
+
+    if(!silent){
+      cat("\nControl-vs-control:\n")
+      print(controls)
+    }
+  } else {
+    if(!silent){
+      cat("\nNo control-vs-control stats: not enough replicates\n")
+    }
+  }
+
+  # Combine with fit data, Get melting Point differences
+  fit_tbl <-
+    split(fit_tbl, fit_tbl$Protein_ID) |>
+    lapply(find_melting_point_diffs, comparisons) |>
+    Reduce(bind_rows, x = _)
+
+  # Get statistics per protein: min R2, max vehicle plateau, min slope
+  fit_tbl <-
+    find_exp_stats(fit_tbl, "min", c("R_sq", "slope"), "Protein_ID")
+  control_max_tbl <-
+    fit_tbl[fit_tbl$Condition == control_name,] |>
+    find_exp_stats("max", "plateau", "Protein_ID")
+  control_max_tbl <- control_max_tbl[c("Protein_ID", "max_plateau")]
+  control_max_tbl <- unique(control_max_tbl)
+  colnames(control_max_tbl)[2] <- "max_control_plateau"
+  fit_tbl <- merge(fit_tbl, control_max_tbl)
+
+  # Get p-values (from Tm as in Savitsky 2014)
+  # 1. Filter to min R2 > 0.8, max vehicle plateau < 0.3
+  pval_tbl <-
+    fit_tbl[fit_tbl$min_R_sq > 0.8 & fit_tbl$max_control_plateau < 0.3,]
+
+  # 2. Order proteins by ascending min slope (of protein)
+  pval_tbl <- pval_tbl[order(pval_tbl$min_slope),]
+
+cat("\n")
+  print(pval_tbl[c(1,2,3,11,12,13,14,15)])
+cat("\n")
+
+  # 3. Divide proteins into bins of 300 (plus end bin of 300+)
+  # 4. Per bin, estimating the left- and right-sided robust standard deviation
+  #    using the 15.87, 50, and 84.13 percentiles and calculating
+  #    P values for all measurements
+  # 5. Adjust with benjamini-hochberg over full sample set.
+  # 6. ???
+  # 7. Profit!
+
+  # print(fit_tbl)
+  TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
+  tibble::as_tibble(TPP_tbl)
+  }
+
+# Function to create comparison data.frame - all conditions compared to control
+create_comparisons_tbl <- function(conds, reps, control_name){
+  conds_no_ctl <- conds[conds != control_name]
+  comparisons <-
+    data.frame(Condition_01 = rep(conds_no_ctl, times = length(reps)),
+               Replicate_01 = rep(reps, each = length(conds_no_ctl)),
+               Condition_02 =
+                 rep(control_name, length(reps) * length(conds_no_ctl)),
+               Replicate_02 = rep(reps, each = length(conds_no_ctl)))
+}
+
+# Function to create comparison data.frame for control-vs-control stats
+create_control_comparison_tbl <- function(reps, control_name){
+  control_matrix <- utils::combn(reps, 2)
+  controls <-
+    data.frame(Condition_01 = control_name,
+               Replicate_01 = control_matrix[1,],
+               Condition_02 = control_name,
+               Replicate_02 = control_matrix[2,])
+}
+
+# Function to find melting point differences with comparison data.frame
+find_melting_point_diffs <- function(fit_tbl, comparisons){
+  comparison_tbl <-
+    reshape(comparisons, direction = "long", varying = c(1:4),
+            sep = "_", idvar = "comparison", timevar = "order") |>
+    merge(fit_tbl[,c("Protein_ID", "Condition", "Replicate",
+                     "melt_point")]) |>
+    reshape(direction = "wide", idvar = "comparison", timevar = "order",
+            v.names = c("Condition", "Replicate", "melt_point"))
+
+  comparison_tbl$comparison <-
+    paste(comparison_tbl$Condition.1, comparison_tbl$Replicate.1, "vs",
+          comparison_tbl$Condition.2, comparison_tbl$Replicate.2, sep = "_")
+  comparison_tbl$diff_melt_point <-
+    comparison_tbl$melt_point.2 - comparison_tbl$melt_point.1
+
+  comparison_tbl <-
+    comparison_tbl[,c("Protein_ID", "Condition.1", "Replicate.1", "comparison",
+                      "diff_melt_point")]
+  colnames(comparison_tbl) <-
+    c("Protein_ID", "Condition", "Replicate", "Comparison", "diff_melt_point")
+  comparison_tbl <- merge(fit_tbl, comparison_tbl, all.x = TRUE)
+
+  tibble::as_tibble(comparison_tbl)
+}
+
+# Function to get statistics experiment-wise
+find_exp_stats <- function(x_tbl, stat_func, stat_column, experiment_cols){
+    apply_stat <- function(x){
+      for(f in stat_func){
+        for(i in stat_column){
+          x[paste(f, i, sep = "_")] <- do.call(get(f), list(x[, i]))
+        }
+      }
+      x
+    }
+
+    exp_formula <-
+      stats::as.formula(paste("~" , paste(experiment_cols, collapse = " + ")))
+    x_tbl <-
+      split(x_tbl, exp_formula) |>
+      lapply(apply_stat) |>
+      Reduce(rbind, x = _)
+
+    x_tbl
+}

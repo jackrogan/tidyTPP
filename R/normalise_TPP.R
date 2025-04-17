@@ -85,7 +85,7 @@ normalise_TPP <- function(TPP_tbl,
                           norm_subset_filter = NULL,
                           quantity_column = "rel_quantity",
                           silent = FALSE){
-
+  TPP_temps <- unique(TPP_tbl$Temp)
   if(!silent){
     cat("--------------------\n")
     cat("TPP Normalisation\n")
@@ -101,7 +101,6 @@ normalise_TPP <- function(TPP_tbl,
   }
   colnames(TPP_tbl)[colnames(TPP_tbl) == quantity_column] <- "quantity"
 
-  TPP_temps <- unique(TPP_tbl$Temp)
 
   # 1. Apply filter criteria - must have 2+ peptide matches
   if(nrow(quality_filter) > 0){
@@ -160,7 +159,8 @@ normalise_TPP <- function(TPP_tbl,
     fit_melt_by_experiment(median_tbl,
                            experiment_cols = c("Condition", "Replicate"),
                            y_column = "quantity",
-                           max_cores = 1)
+                           max_cores = 1,
+                           silent = silent)
 
   # Plot normalisation curves
   if(to_plot | !is.null(to_save)) {
