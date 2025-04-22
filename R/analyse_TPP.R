@@ -55,6 +55,7 @@ analyse_TPP <-
   }
 
   # Combine with fit data, Get melting Point differences
+  if(!silent) cat("\nCalculate per-curve statistics...\n")
   fit_tbl <-
     split(fit_tbl, fit_tbl$Protein_ID) |>
     lapply(find_melting_point_diffs, comparisons) |>
@@ -71,29 +72,49 @@ analyse_TPP <-
   colnames(control_max_tbl)[2] <- "max_control_plateau"
   fit_tbl <- merge(fit_tbl, control_max_tbl)
 
+  if(!silent) cat("Calculate p-values...\n")
+
   # Get p-values (from Tm as in Savitsky 2014)
   # 1. Filter to min R2 > 0.8, max vehicle plateau < 0.3
   pval_tbl <-
     fit_tbl[fit_tbl$min_R_sq > 0.8 & fit_tbl$max_control_plateau < 0.3,]
+  pval_tbl <- pval_tbl[!is.na(pval_tbl$diff_melt_point),]
 
   # 2. Order proteins by ascending min slope (of protein)
   pval_tbl <- pval_tbl[order(pval_tbl$min_slope),]
 
-cat("\n")
-  print(pval_tbl[c(1,2,3,11,12,13,14,15)])
-cat("\n")
-
   # 3. Divide proteins into bins of 300 (plus end bin of 300+)
-  # 4. Per bin, estimating the left- and right-sided robust standard deviation
+  initial_bins <- (nrow(pval_tbl) %/% 300) + 1
+  pval_tbl$bin <-
+    rep(1:initial_bins, each = 300, length.out = nrow(pval_tbl))
+  if(nrow(pval_tbl[pval_tbl$bin == initial_bins,]) < 300){
+    pval_tbl[pval_tbl$bin == initial_bins, "bin"] <- initial_bins - 1
+  }
+  pval_tbl_list <- split(pval_tbl, pval_tbl$bin)
+
+  # 4. Per bin, estimate the left- and right-sided robust standard deviation
   #    using the 15.87, 50, and 84.13 percentiles and calculating
   #    P values for all measurements
-  # 5. Adjust with benjamini-hochberg over full sample set.
-  # 6. ???
-  # 7. Profit!
+  pval_tbl_list <- lapply(pval_tbl_list, calculate_binwise_pvalue)
+  pval_tbl <- Reduce(rbind, pval_tbl_list)
 
-  # print(fit_tbl)
+  # 5. Adjust with benjamini-hochberg over full sample set.
+  pval_tbl$adj_pvalue <- stats::p.adjust(pval_tbl$pvalue, "BH")
+
+  pval_tbl <- pval_tbl[c("Protein_ID", "Condition", "Replicate",
+                         "Comparison", "adj_pvalue")]
+
+  # Merge tibbles for ease of pipeline and export
+  fit_tbl <- merge(fit_tbl, pval_tbl, all.x = TRUE)
   TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
-  tibble::as_tibble(TPP_tbl)
+  full_tbl <- merge(TPP_tbl, fit_tbl,
+                    by = c("Protein_ID", "Condition", "Replicate"),
+                    all.x = TRUE)
+
+  if(!silent) cat("\nAnalysed.\n--------------------\n")
+
+  tibble::as_tibble(full_tbl)
+
   }
 
 # Function to create comparison data.frame - all conditions compared to control
@@ -162,4 +183,30 @@ find_exp_stats <- function(x_tbl, stat_func, stat_column, experiment_cols){
       Reduce(rbind, x = _)
 
     x_tbl
+}
+
+# Function to compute per-bin p-values
+calculate_binwise_pvalue <- function(binned_data){
+  # Use 15.87, 50, and 84.13 percentiles
+  mp_quantiles <-
+    quantile(binned_data$diff_melt_point,
+             probs = c(0.1587, 0.5, 0.8413),
+             na.rm=TRUE)
+  q1 <- mp_quantiles[1]
+  q2 <- mp_quantiles[2]
+  q3 <- mp_quantiles[3]
+
+  # Separate left- and right-sided data
+  right_binned_data <- binned_data[binned_data$diff_melt_point > q2,]
+  left_binned_data <- binned_data[binned_data$diff_melt_point <= q2,]
+
+  # Generate z-scores
+  right_binned_data$z <-  (right_binned_data$diff_melt_point - q2) / (q3-q2)
+  left_binned_data$z <- (q2 - left_binned_data$diff_melt_point) / (q2-q1)
+
+  # Recombine, calculate p-value
+  binned_data <- rbind(right_binned_data, left_binned_data)
+  binned_data$pvalue <- 2 * stats::pnorm(abs(binned_data$z), lower.tail = FALSE)
+  binned_data <- binned_data[order(binned_data$min_slope),]
+
 }
