@@ -22,8 +22,14 @@
 #' @inheritParams fit_melting_curve
 #' @param TPP_tbl A data frame (or [tibble]) containing proteomics data from a
 #'  thermal protein profiling (TPP) experiment. This must contain the columns:
-#'  * Experiment temperature in \eqn{\degree C}
+#'  * `Protein_ID`: Unique protein identity
+#'  * `Condition` : Category of treated or control sample
+#'  * `Replicate` : Replicate number.
+#'  * `Temperature`: Experiment temperature in \eqn{\degree C}
 #'  * Protein quantity measurement corresponding to the non-denatured fraction
+#'
+#'  If replicates are not given, a single replicate per condition will be
+#'  assumed.
 #' @param quality_filter A data.frame containing the information needed to build
 #' an initial quantity filter. Columns must be \emph{col}, \emph{lower} and
 #' \emph{upper}. Default:
@@ -96,11 +102,8 @@ normalise_TPP <- function(TPP_tbl,
     cat("Quality Criteria:\n")
     print(quality_filter)
   }
-  if("quantity" %in% colnames(TPP_tbl) & quantity_column != "quantity") {
-    colnames(TPP_tbl)[colnames(TPP_tbl) == "quantity"] <- "quan_renamed"
-  }
-  colnames(TPP_tbl)[colnames(TPP_tbl) == quantity_column] <- "quantity"
-
+  TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
+  if(!"Replicate" %in% colnames(TPP_tbl)) TPP_tbl$Replicate <- "01"
 
   # 1. Apply filter criteria - must have 2+ peptide matches
   if(nrow(quality_filter) > 0){
@@ -212,12 +215,7 @@ normalise_TPP <- function(TPP_tbl,
     cat("--------------------\n")
   }
 
-
-  colnames(TPP_tbl)[colnames(TPP_tbl) == "quantity"] <- quantity_column
-  if("quan_renamed" %in% colnames(TPP_tbl)){
-    colnames(TPP_data)[colnames(TPP_tbl) == "quan_renamed"] <- "quantity"
-  }
-
+  TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
   tibble::as_tibble(TPP_tbl)
 }
 

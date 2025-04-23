@@ -1,4 +1,59 @@
-# Analysis function - fit curves and find p-values
+#' Analyse TPP-TR Data
+#'
+#' @description
+#' `analyse_TPP()` transforms \emph{Thermal Protein Profiling} (TPP) relative
+#'  intensity data, fitting sigmoidal melting curves to the presumably
+#'  normalised data, generating curve parameters - including melting points,
+#'  then calculating statistical parameters including p-value as described by
+#'  Savitsky \emph{et al.} 2014:
+#'  * Melting point differences (\eqn{\Delta T_m}) are found and filtered to
+#'    those for which \eqn{R^2 > 0.8} for all observations and
+#'    \eqn{plateau < 0.3} for all control curves.
+#'  * Proteins are ordered by steepness of melting curve slope - steepest first.
+#'  * These proteins are then divided into bins of 300, and the final group
+#'    added to the second-to-last if less than 300.
+#'  * Per bin, the left- and right-sided robust standard deviation is estimated
+#'    using the 15.87, 50, and 84.13 percentiles and calculating p-values for
+#'    all measurements binwise.
+#'  * The p-values thus calculated are adjusted by applying the
+#'    Benjamini-Hochberg procedure to control the false discovery rate
+#'    (\emph{FDR}).
+#
+#' @inheritParams normalise_TPP
+#' @param comparisons A data.frame containing the information needed to build
+#'  the comparisons to use to calculate \eqn{\Delta T_m} and other statistics.
+#'  Columns must be \emph{Condition_01}, \emph{Replicate_01},
+#'  \emph{Condition_02} and \emph{Replicate_01}, \emph{e.g}:
+#'
+#'  | Condition_01 | Replicate_01 | Condition_02 | Replicate_01 |
+#'  | ------------:| ------------:| ------------:| ------------:|
+#'  | Treated      | 01           | Control      | 01           |
+#'  | Treated      | 02           | Control      | 02           |
+#'
+#'  If no table is given, one will be generated based on the conditions in the
+#'  data, comparing each condition to control and like-for-like replicate
+#'  comparisons.
+#'
+#' @param control_name Character: Character string that matches the control
+#'  experiment in `TPP_tbl$Condition`
+#' @param ... Further arguments to be passed to [fit_melt_by_experiment()] and
+#' [nls_multstart()]
+#'
+#' @return A `tibble` containing all data in TPP_tbl, with additional calculated
+#'  columns (where possible) detaling curve parameters and comparison statistics
+#'
+#' @references
+#'  Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
+#'  thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+#'
+#'  Benjamini, Y., and Hochberg, Y. Controlling the false discovery
+#'  rate: a practical and powerful approach to multiple testing. \emph{Journal
+#'  of the Royal Statistical Society Series B}, 57, 289–300 (1995)
+#'
+#' @export
+#'
+#' @examples
+#' # Examples
 analyse_TPP <-
   function(TPP_tbl,
            comparisons = NULL,
@@ -8,6 +63,7 @@ analyse_TPP <-
            ...){
 
   TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
+  if(!"Replicate" %in% colnames(TPP_tbl)) TPP_tbl$Replicate <- "01"
 
   if(!silent){
     cat("--------------------\n")

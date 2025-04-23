@@ -18,9 +18,15 @@ normalise_TPP(
 \item{TPP_tbl}{A data frame (or \link{tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
-\item Experiment temperature in \eqn{\degree C}
+\item \code{Protein_ID}: Unique protein identity
+\item \code{Condition} : Category of treated or control sample
+\item \code{Replicate} : Replicate number.
+\item \code{Temperature}: Experiment temperature in \eqn{\degree C}
 \item Protein quantity measurement corresponding to the non-denatured fraction
-}}
+}
+
+If replicates are not given, a single replicate per condition will be
+assumed.}
 
 \item{to_plot}{Boolean. If true, run \code{\link[=plot]{plot()}} on \code{ggplot} object}
 
