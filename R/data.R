@@ -1,7 +1,7 @@
 #' Parameters for ATIC Protein Melting Curve
 #'
 #' A dataset containing the parameters generated from fitting a melting curve
-#' to raw  proteomics data (DIA) for the protein ATIC:
+#' to normalised proteomics data (DIA) for the protein ATIC:
 #'
 #' @format A data frame with 4 rows and 10 variables:
 #' \describe{
@@ -32,6 +32,45 @@ MP_data_ATIC <-
     "R_sq" = c(0.9972189, 0.9941574, 0.9993804, 0.9981549)
   )
 
+#' Statistics for ATIC Protein Melting Curve
+#'
+#' A dataset containing the statistics and parameters generated from fitting a
+#' melting curve to normalised proteomics data (DIA) for the protein ATIC and
+#' comparing melting curves across measurements:
+#'
+#' @format A data frame with 4 rows and 16 variables:
+#' \describe{
+#'   \item{Protein_ID}{Gene name identifying the protein}
+#'   \item{Condition}{Treatment given to this sample set}
+#'   \item{Replicate}{Replicate number for this sample set}
+#'   \item{`a`}{Parameter `a` from sigmoidal curve fitting}
+#'   \item{`b`}{Parameter `b` from sigmoidal curve fitting}
+#'   \item{melt_point}{Melting point, calculated as the model temperature
+#'    resulting in 50 % of the protein destabilised}
+#'   \item{infl_point}{Inflection point, calculated as the model temperature
+#'    for which \eqn{f''(T_{infl}) = 0 }}
+#'   \item{slope}{Sigmoidal curve slope, calculated as \eqn{f'(T_{infl}) }}
+#'   \item{plateau}{The plateau of the modeled sigmoidal curve}
+#'   \item{R_sq}{\eqn{R^2} for the fitted sigmoidal curve}
+#'   \item{Comparison}{Measurements compared for \eqn{\Delta T_m}}
+#'   \item{diff_melt_point}{Melting point difference (\eqn{\Delta T_m})}
+#'   \item{min_R_sq}{Minimum \eqn{R^2} across protein}
+#'   \item{min_slope}{Minimum slope across protein}
+#'   \item{max_control_plateau}{Maximum curve plateau in control samples for
+#'    each protein}
+#'   \item{adj_pvalue}{p-value for melting point difference, FDR adjusted using
+#'    \emph{Benjamini-Hochberg} correction}}
+#'
+MP_stat_data_ATIC <-
+  cbind(MP_data_ATIC, data.frame(
+    "Comparison" =
+      c(NA, NA, "Treated_01_vs_Control_01", "Treated_02_vs_Control_02"),
+    "diff_melt_point" = c(NA, NA, -2.48947, -1.62122),
+    "min_R_sq" = rep(0.9941574, 4),
+    "min_slope" = rep(-0.1200861, 4),
+    "max_control_plateau" = rep(0, 4),
+    "adj_pvalue" = c(NA, NA, 0.142924515, 0.142924515)
+  ))
 #' Quantity data for ATIC Protein Melting Curve
 #'
 #' A dataset containing raw proteomics data (DIA) for the protein ATIC:

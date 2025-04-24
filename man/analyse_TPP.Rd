@@ -78,7 +78,26 @@ Benjamini-Hochberg procedure to control the false discovery rate
 }
 }
 \examples{
-# Examples
+# Minimal data - two-protein melt curve
+x <- quan_data_normP
+norm_x <- normalise_TPP(x)
+
+# Analyse - single core curve fitting
+analyse_TPP(norm_x, max_cores = 1)
+
+# Custom comparisons, e.g. compare treated replicates
+comparison_tbl <-  data.frame(
+  Condition_01 = c("Treated", "Treated", "Treated"),
+  Replicate_01 = c("01", "02", "01"),
+  Condition_02 = c("Control", "Control","Treated") ,
+  Replicate_02 = c("01", "02", "02")
+)
+
+analyse_TPP(
+  norm_x,
+  comparisons = comparison_tbl,
+  max_cores = 1
+)
 }
 \references{
 Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by

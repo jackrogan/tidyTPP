@@ -53,7 +53,26 @@
 #' @export
 #'
 #' @examples
-#' # Examples
+#' # Minimal data - two-protein melt curve
+#' x <- quan_data_normP
+#' norm_x <- normalise_TPP(x)
+#'
+#' # Analyse - single core curve fitting
+#' analyse_TPP(norm_x, max_cores = 1)
+#'
+#' # Custom comparisons, e.g. compare treated replicates
+#' comparison_tbl <-  data.frame(
+#'   Condition_01 = c("Treated", "Treated", "Treated"),
+#'   Replicate_01 = c("01", "02", "01"),
+#'   Condition_02 = c("Control", "Control","Treated") ,
+#'   Replicate_02 = c("01", "02", "02")
+#' )
+#'
+#' analyse_TPP(
+#'   norm_x,
+#'   comparisons = comparison_tbl,
+#'   max_cores = 1
+#' )
 analyse_TPP <-
   function(TPP_tbl,
            comparisons = NULL,
@@ -83,10 +102,9 @@ analyse_TPP <-
 
   # Default comparisons - assumes condition, replicate columns:
   # non-control vs control, match replicates - TODO  Condition mask
+  reps <- unique(TPP_tbl$Replicate)
   if(is.null(comparisons)){
     conds <- unique(TPP_tbl$Condition)
-    reps <- unique(TPP_tbl$Replicate)
-
     comparisons <- create_comparisons_tbl(conds, reps, control_name)
   }
 
@@ -115,7 +133,7 @@ analyse_TPP <-
   fit_tbl <-
     split(fit_tbl, fit_tbl$Protein_ID) |>
     lapply(find_melting_point_diffs, comparisons) |>
-    Reduce(bind_rows, x = _)
+    Reduce(rbind, x = _)
 
   # Get statistics per protein: min R2, max vehicle plateau, min slope
   fit_tbl <-
@@ -197,11 +215,11 @@ create_control_comparison_tbl <- function(reps, control_name){
 # Function to find melting point differences with comparison data.frame
 find_melting_point_diffs <- function(fit_tbl, comparisons){
   comparison_tbl <-
-    reshape(comparisons, direction = "long", varying = c(1:4),
+    stats::reshape(comparisons, direction = "long", varying = c(1:4),
             sep = "_", idvar = "comparison", timevar = "order") |>
     merge(fit_tbl[,c("Protein_ID", "Condition", "Replicate",
                      "melt_point")]) |>
-    reshape(direction = "wide", idvar = "comparison", timevar = "order",
+    stats::reshape(direction = "wide", idvar = "comparison", timevar = "order",
             v.names = c("Condition", "Replicate", "melt_point"))
 
   comparison_tbl$comparison <-
@@ -245,7 +263,7 @@ find_exp_stats <- function(x_tbl, stat_func, stat_column, experiment_cols){
 calculate_binwise_pvalue <- function(binned_data){
   # Use 15.87, 50, and 84.13 percentiles
   mp_quantiles <-
-    quantile(binned_data$diff_melt_point,
+    stats::quantile(binned_data$diff_melt_point,
              probs = c(0.1587, 0.5, 0.8413),
              na.rm=TRUE)
   q1 <- mp_quantiles[1]
