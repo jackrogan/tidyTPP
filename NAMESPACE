@@ -3,6 +3,7 @@
 export(analyse_TPP)
 export(build_melt_plot_with_model)
 export(build_observed_TPP_plot)
+export(export_TPP)
 export(fit_melt_by_experiment)
 export(fit_melting_curve)
 export(import_spectronaut)

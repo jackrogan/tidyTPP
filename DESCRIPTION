@@ -29,4 +29,5 @@ Imports:
     rlang,
     stats,
     tibble,
-    tidyr
+    tidyr,
+    writexl
