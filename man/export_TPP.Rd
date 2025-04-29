@@ -51,7 +51,7 @@ x <- MP_stat_data_ATIC
 # Default behaviour - save a .xlsx spreadsheet of results data.
 file <- tempfile()
 export_TPP(x, file)
-unlink(file)
+unlink(paste0(file, ".xlsx"))
 
 # Passing a filename with a .tsv extension saves as tab-separated data
 file <- tempfile(fileext = ".tsv")
@@ -65,7 +65,7 @@ export_TPP(
   file,
   format = "csv"
 )
-unlink(file)
+unlink(paste0(file, ".csv"))
 
 # Save Rdata object with no console messages
 file <- tempfile()
@@ -75,5 +75,5 @@ export_TPP(
   format = "Rda",
   silent = TRUE
   )
-unlink(file)
+unlink(paste0(file, ".Rda"))
 }

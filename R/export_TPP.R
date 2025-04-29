@@ -31,7 +31,7 @@
 #' # Default behaviour - save a .xlsx spreadsheet of results data.
 #' file <- tempfile()
 #' export_TPP(x, file)
-#' unlink(file)
+#' unlink(paste0(file, ".xlsx"))
 #'
 #' # Passing a filename with a .tsv extension saves as tab-separated data
 #' file <- tempfile(fileext = ".tsv")
@@ -45,7 +45,7 @@
 #'   file,
 #'   format = "csv"
 #' )
-#' unlink(file)
+#' unlink(paste0(file, ".csv"))
 #'
 #' # Save Rdata object with no console messages
 #' file <- tempfile()
@@ -55,7 +55,7 @@
 #'   format = "Rda",
 #'   silent = TRUE
 #'   )
-#' unlink(file)
+#' unlink(paste0(file, ".Rda"))
 export_TPP <- function(TPP_data,
                        file_name,
                        path = NULL,
@@ -112,7 +112,10 @@ export_TPP <- function(TPP_data,
   if(toupper(format) == "CSV") {
     save_func <- \(x, y) utils::write.table(x, y, sep = ",")
   }
-  if(toupper(format) == "TSV") save_func <- utils::write.table
+  if(toupper(format) == "TSV"){
+    save_func <- \(x, y) utils::write.table(x, y, sep = "\t")
+  }
+
   if(toupper(format) == "XLSX") save_func <- writexl::write_xlsx
 
   do.call(save_func, args = list(TPP_results, export_file))
