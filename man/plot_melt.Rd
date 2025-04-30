@@ -6,7 +6,7 @@
 \usage{
 plot_melt(
   data,
-  fit_parameters,
+  fit_parameters = NULL,
   to_plot = TRUE,
   to_save = NULL,
   to_add_to_ggplot = NULL,
@@ -14,10 +14,13 @@ plot_melt(
 )
 }
 \arguments{
-\item{data}{TPP protein observation data; see \code{\link[=build_melt_plot_with_model]{build_melt_plot_with_model()}}}
+\item{data}{TPP protein observation data; see \code{\link[=build_melt_plot_with_model]{build_melt_plot_with_model()}}.
+If fit_parameters are not given separately they will be expected as part of
+this dataset, as \code{a}, \code{b}, \code{plateau} and, if intending to annotate,
+\code{melt_point}, and \code{R_sq} columns}
 
 \item{fit_parameters}{parameters to predict protein melting curve; see
-\code{\link[=predict_melt_curve]{predict_melt_curve()}}}
+\code{\link[=predict_melt_curve]{predict_melt_curve()}}. Overrides columns in \code{data}}
 
 \item{to_plot}{Boolean. If true, run \code{\link[=plot]{plot()}} on \code{ggplot} object}
 
@@ -48,6 +51,10 @@ x_parameters <- MP_data_ATIC
 
 # Plot melting point curve
 plot_melt(x, x_parameters)
+
+# Use combined data table
+x_plus_params <- merge(x, x_parameters)
+plot_melt(x_plus_params)
 
 # Customise plot
 plot_melt(

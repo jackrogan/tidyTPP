@@ -9,10 +9,12 @@
 #'  original data set, to match the behaviour of \emph{e.g.} [print()] or
 #'  [plot()].
 #'
-#'
-#' @param data TPP protein observation data; see [build_melt_plot_with_model()]
+#' @param data TPP protein observation data; see [build_melt_plot_with_model()].
+#'  If fit_parameters are not given separately they will be expected as part of
+#'  this dataset, as `a`, `b`, `plateau` and, if intending to annotate,
+#'  `melt_point`, and `R_sq` columns
 #' @param fit_parameters parameters to predict protein melting curve; see
-#'  [predict_melt_curve()]
+#'  [predict_melt_curve()]. Overrides columns in `data`
 #' @param to_plot Boolean. If true, run [plot()] on `ggplot` object
 #' @param to_save Character. If supplied, save plot with [ggsave()]
 #' @param to_add_to_ggplot List. Optional list of further additions to `ggplot`;
@@ -31,6 +33,10 @@
 #' # Plot melting point curve
 #' plot_melt(x, x_parameters)
 #'
+#' # Use combined data table
+#' x_plus_params <- merge(x, x_parameters)
+#' plot_melt(x_plus_params)
+#'
 #' # Customise plot
 #' plot_melt(
 #'   x,
@@ -41,12 +47,23 @@
 #'   facets = FALSE)
 #'
 plot_melt <- function(data,
-                      fit_parameters,
+                      fit_parameters = NULL,
                       to_plot = TRUE,
                       to_save = NULL,
                       to_add_to_ggplot = NULL,
                       ...
                       ){
+
+  # Deal with fit parameters - if not given, try to extract from data
+  if(is.null(fit_parameters)){
+    fit_parameters <-
+      data[colnames(data) %in% c("Protein_ID",
+                                 "Condition",
+                                 "Replicate",
+                                 "a", "b", "plateau",
+                                 "melt_point",
+                                 "R_sq")]
+  }
 
   # Deal with arguments to pass to functions
   parse_pass_dots <- function(func, add_args = list(), ...){
@@ -55,14 +72,22 @@ plot_melt <- function(data,
     do.call(func, c(add_args, func_dots))
   }
 
-  model_data <-
-    parse_pass_dots(predict_melt_curve,
-                    list("fit_parameters" = fit_parameters),
-                    ...)
-  melting_plot <-
-    parse_pass_dots(build_melt_plot_with_model,
-                    list("data" = data, "predicted_data" = model_data),
-                    ...)
+  if(ncol(fit_parameters) > 3){
+    model_data <-
+      parse_pass_dots(predict_melt_curve,
+                      list("fit_parameters" = fit_parameters),
+                      ...)
+    melting_plot <-
+      parse_pass_dots(build_melt_plot_with_model,
+                      list("data" = data, "predicted_data" = model_data),
+                      ...)
+  } else {
+    melting_plot <-
+      parse_pass_dots(build_observed_TPP_plot,
+                      list("data" = data),
+                      ...)
+  }
+
 
   if(!is.null(to_add_to_ggplot)){
     addition_list <- c(list(melting_plot), list(to_add_to_ggplot))
