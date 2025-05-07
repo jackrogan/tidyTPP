@@ -4,9 +4,9 @@
 #' `export_TPP()` exports a results data frame in the chosen format.
 #'
 #' @param TPP_data Data to export in a `data.frame` or `tibble`
-#' @param file_name Character - file name to be written to. If `format` is not
+#' @param file_name Character. File name to be written to. If `format` is not
 #'  set, file extension will be used to decide format.
-#' @param path Character - optionally, the directory path to the location to be
+#' @param path Character. Optionally, the directory path to the location to be
 #' saved in, if not the working directory.
 #' @param format File save format:
 #'  * \emph{xlsx:} Excel spreadsheet, using [writexl::write_xlsx()]
@@ -17,7 +17,7 @@
 #'
 #'  If not given, will default to "xlsx"
 #'
-#' @param include_columns Character vector - column names to included in the
+#' @param include_columns Character vector. Column names to included in the
 #'  exported data. If not given, the all columns in `TPP_data` will be exported
 #' @param silent Boolean. If true, will run silently, without console output.
 #'

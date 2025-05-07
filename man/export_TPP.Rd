@@ -16,10 +16,10 @@ export_TPP(
 \arguments{
 \item{TPP_data}{Data to export in a \code{data.frame} or \code{tibble}}
 
-\item{file_name}{Character - file name to be written to. If \code{format} is not
+\item{file_name}{Character. File name to be written to. If \code{format} is not
 set, file extension will be used to decide format.}
 
-\item{path}{Character - optionally, the directory path to the location to be
+\item{path}{Character. Optionally, the directory path to the location to be
 saved in, if not the working directory.}
 
 \item{format}{File save format:
@@ -33,7 +33,7 @@ saved in, if not the working directory.}
 
 If not given, will default to "xlsx"}
 
-\item{include_columns}{Character vector - column names to included in the
+\item{include_columns}{Character vector. Column names to included in the
 exported data. If not given, the all columns in \code{TPP_data} will be exported}
 
 \item{silent}{Boolean. If true, will run silently, without console output.}

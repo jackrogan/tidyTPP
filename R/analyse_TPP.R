@@ -34,7 +34,7 @@
 #'  data, comparing each condition to control and like-for-like replicate
 #'  comparisons.
 #'
-#' @param control_name Character: Character string that matches the control
+#' @param control_name Character. Character string that matches the control
 #'  experiment in `TPP_tbl$Condition`
 #' @param ... Further arguments to be passed to [fit_melt_by_experiment()] and
 #' [nls_multstart()]

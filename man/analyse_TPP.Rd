@@ -44,7 +44,7 @@ comparisons.}
 \item{quantity_column}{Character. Name for the column containing
 protein quantity values in \code{TPP_tbl}}
 
-\item{control_name}{Character: Character string that matches the control
+\item{control_name}{Character. Character string that matches the control
 experiment in \code{TPP_tbl$Condition}}
 
 \item{silent}{Boolean. If \code{TRUE}, no console output is shown}
