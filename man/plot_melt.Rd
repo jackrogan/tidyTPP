@@ -9,6 +9,7 @@ plot_melt(
   fit_parameters = NULL,
   to_plot = TRUE,
   to_save = NULL,
+  file_suffix_column = NULL,
   to_add_to_ggplot = NULL,
   ...
 )
@@ -25,6 +26,11 @@ this dataset, as \code{a}, \code{b}, \code{plateau} and, if intending to annotat
 \item{to_plot}{Boolean. If true, run \code{\link[=plot]{plot()}} on \code{ggplot} object}
 
 \item{to_save}{Character. If supplied, save plot with \code{\link[=ggsave]{ggsave()}}}
+
+\item{file_suffix_column}{Character. The name of a column to be used as an
+additional file suffix before the extension if \code{to_save} is given and the
+plot is to be saved. The first element of the given column of \code{data} will be
+used to identify the plot.}
 
 \item{to_add_to_ggplot}{List. Optional list of further additions to \code{ggplot};
 will be added using \code{\link[=+.gg]{+.gg()}}}

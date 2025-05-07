@@ -17,6 +17,10 @@
 #'  [predict_melt_curve()]. Overrides columns in `data`
 #' @param to_plot Boolean. If true, run [plot()] on `ggplot` object
 #' @param to_save Character. If supplied, save plot with [ggsave()]
+#' @param file_suffix_column Character. The name of a column to be used as an
+#'  additional file suffix before the extension if `to_save` is given and the
+#'  plot is to be saved. The first element of the given column of `data` will be
+#'  used to identify the plot.
 #' @param to_add_to_ggplot List. Optional list of further additions to `ggplot`;
 #'  will be added using [+.gg()]
 #' @param ... Additional arguments to be passed to [predict_melt_curve()] or
@@ -50,6 +54,7 @@ plot_melt <- function(data,
                       fit_parameters = NULL,
                       to_plot = TRUE,
                       to_save = NULL,
+                      file_suffix_column = NULL,
                       to_add_to_ggplot = NULL,
                       ...
                       ){
@@ -63,13 +68,6 @@ plot_melt <- function(data,
                                  "a", "b", "plateau",
                                  "melt_point",
                                  "R_sq")]
-  }
-
-  # Deal with arguments to pass to functions
-  parse_pass_dots <- function(func, add_args = list(), ...){
-    dots <- list(...)
-    func_dots <- dots[names(dots) %in% names(formals(func))]
-    do.call(func, c(add_args, func_dots))
   }
 
   if(ncol(fit_parameters) > 3){
@@ -93,9 +91,16 @@ plot_melt <- function(data,
     addition_list <- c(list(melting_plot), list(to_add_to_ggplot))
     melting_plot <- Reduce("+", addition_list)
   }
+
   if(to_plot) plot(melting_plot)
   if(!is.null(to_save)) {
-    ggplot2::ggsave(to_save, melting_plot)
+    file_suffix <- NULL
+    if(!is.null(file_suffix_column)) {
+      file_suffix = paste0("_", data[[1, file_suffix_column]])
+    }
+    ggplot2::ggsave(
+      sub("(\\.[[:alnum:]]+)*$", paste0(file_suffix, "\\1"), to_save),
+      melting_plot)
   }
 
   data

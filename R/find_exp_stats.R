@@ -18,3 +18,7 @@ find_exp_stats <- function(x_tbl, stat_func, stat_column, experiment_cols){
 
   x_tbl
 }
+
+# Additional functions
+min_abs <- function(x) min(abs(x))
+all_same_sign <- function(x) all(x > 0) | all(x < 0)
