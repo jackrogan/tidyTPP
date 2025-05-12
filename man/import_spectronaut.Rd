@@ -10,10 +10,13 @@ import_spectronaut(datafile, config, path = NULL, silent = FALSE)
 \item{datafile}{Character. Specify a Spectronaut .csv report filename
 containing the protein quantity data.}
 
-\item{config}{Either a character, specifying the file name of a text .csv
-file with experiment configuration, or literal data that can be passed to
-\link[readr:read_delim]{readr::read_csv}. This should take the form of a table with the
-column names \emph{Experiment}, \emph{Condition}, \emph{Replicate} and
+\item{config}{Either a character, specifying the file name of a delimited
+file with experiment configuration, to be opened with
+\link{read.table}/\link[readxl:read_excel]{readxl::read_excel} or a \code{data.frame}/\code{tibble} with
+configuration information.
+
+This should take the form of a table with the column names
+\emph{Experiment}, \emph{Condition}, \emph{Replicate} and
 \emph{Temp}.}
 
 \item{path}{Character. Optionally, the path to a directory containing the

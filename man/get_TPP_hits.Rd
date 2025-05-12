@@ -11,7 +11,7 @@ get_TPP_hits(
     DTm_same_sign = TRUE, DTm_gt_Dcontrol = TRUE, slope_threshold = -0.06),
   control_name = "Control",
   to_export = "TPP_hits.xlsx",
-  to_plot = TRUE,
+  to_plot = FALSE,
   to_save = NULL,
   plot_separately = FALSE,
   silent = FALSE,

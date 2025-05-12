@@ -107,17 +107,14 @@ export_TPP <- function(TPP_data,
   unsaved <- c(
     "Export format not recognised, please use 'xlsx', 'csv', 'tsv' or 'Rda'.\n",
     "Not saved.\n")
-  save_func <- \(x, y) cat(unsaved, sep = "")
-  if(toupper(format) == "RDA") save_func <- \(x, y) save(x, file = y)
-  if(toupper(format) == "CSV") {
-    save_func <- \(x, y) utils::write.table(x, y, sep = ",")
-  }
-  if(toupper(format) == "TSV"){
-    save_func <- \(x, y) utils::write.table(x, y, sep = "\t")
-  }
-
-  if(toupper(format) == "XLSX") save_func <- writexl::write_xlsx
-
+  save_func <-
+    switch(toupper(format),
+           "RDA" = \(x, y) save(x, file = y),
+           "XLSX" = writexl::write_xlsx,
+           "CSV" = \(x, y) utils::write.table(x, y, sep = ","),
+           "TSV" = \(x, y) utils::write.table(x, y, sep = "\t"),
+           \(x, y) cat(unsaved, sep = "")
+    )
   do.call(save_func, args = list(TPP_results, export_file))
 
   if(!silent) cat("Saved.\n--------------------\n")

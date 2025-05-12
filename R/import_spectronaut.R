@@ -1,15 +1,8 @@
 #' Import TPP data from Spectronaut report into tidier tibble format.
 #'
+#' @inheritParams import_custom_format
 #' @param datafile Character. Specify a Spectronaut .csv report filename
 #'  containing the protein quantity data.
-#' @param config  Either a character, specifying the file name of a text .csv
-#'  file with experiment configuration, or literal data that can be passed to
-#'  [readr::read_csv]. This should take the form of a table with the
-#'  column names \emph{Experiment}, \emph{Condition}, \emph{Replicate} and
-#'  \emph{Temp}.
-#' @param path Character. Optionally, the path to a directory containing the
-#'  data and configuration files. If given, this will be appended to both paths.
-#' @param silent Boolean. If true, will run silently, without console output.
 #'
 #' @return A tibble giving the TPP protein quantity data relative to the lowest
 #'  temperature, \eqn{T_1}, as \emph{rel_quantity}, in a tidier format: 1 row

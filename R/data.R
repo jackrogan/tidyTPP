@@ -66,7 +66,7 @@ MP_stat_data_ATIC <-
     "Comparison" =
       c("Control_01_vs_Control_01", NA,
         "Treated_01_vs_Control_01", "Treated_02_vs_Control_02"),
-    "diff_melt_point" = c(0.49863, NA, -2.48947, -1.62122),
+    "diff_melt_point" = c(-0.49863, NA, 2.48947, 1.62122),
     "min_R_sq" = rep(0.9941574, 4),
     "min_slope" = rep(-0.1200861, 4),
     "max_control_plateau" = rep(0, 4),

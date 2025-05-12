@@ -1,0 +1,258 @@
+#' Import TPP data from proteomics tabular data into tidier tibble format.
+#'
+#' @param datafile Character. Specify a filename for a delimited text file or
+#' \emph{.xlsx} spreadsheet containing the protein quantity data.
+#' @param config  Either a character, specifying the file name of a delimited
+#'  file with experiment configuration, to be opened with
+#'  [read.table]/[readxl::read_excel] or a `data.frame`/`tibble` with
+#'  configuration information.
+#'
+#'  This should take the form of a table with the column names
+#'  \emph{Experiment}, \emph{Condition}, \emph{Replicate} and
+#'  \emph{Temp}.
+#' @param path Character. Optionally, the path to a directory containing the
+#'  data and configuration files. If given, this will be appended to both paths.
+#' @param table_format One of "wide" or "long". Are the quantity data in the
+#'  file to import presented in a wide format - one column per temperature point
+#'  observation, or long - one quantity column, one experimental identifier
+#'  column, \emph{e.g.}
+#'
+#'  \emph{Wide:}
+#'
+#'  | Quantity_Sample_01.raw | Quantity_Sample_02.raw | Quantity_Sample_03.raw |
+#'  | ----------------------:| ----------------------:| ----------------------:|
+#'  | 5434942                | 5394587                | 4523683                |
+#'
+#'  \emph{Long:}
+#'
+#'  | Experiment    | Quantity |
+#'  | -------------:| --------:|
+#'  | Sample_01.raw | 5434942  |
+#'  | Sample_02.raw | 5394587  |
+#'  | Sample_03.raw | 4523683  |
+#'
+#' @param quantity_pattern Character. Regular expression that identifies protein
+#'  quantity column(s)
+#' @param protein_id_col_name Character. The exact name of a column in the data
+#' from which a unique proteinn ID will be taken.
+#' @param experiment_col_name Character. If `table_format = "wide"`, the exact
+#'  name of a column in the data from which experiment ID should be taken.
+#' @param quantity_col_name Character. If `table_format = "wide"`, the name of
+#'  a column in the data from which protein quantity values should be taken.
+#'  Will override `quantity_pattern` if both are supplied
+#' @param experiment_id_func Optional function to transform vector of column
+#'  names for quantity columns into experiment IDs matching the contents of the
+#'  `Experiment` column from the `config` data. If not given, samples are
+#'  assigned a number based on order of appearance in the data.
+#' @param seq_col_name Optional character. The exact name of a column in the
+#'  data from which peptide sequences should be taken. If not given, number of
+#'  peptide IDs per protein will be estimated from number of identical rows in
+#'  data per protein.
+#' @param seq_col_func Optional function to transform peptide sequence column to
+#'  extract peptide canonical sequence (used to differentiate peptide matches
+#'  per protein from total spectrum matches)
+#' @param silent Boolean. If true, will run silently, without console output.
+#' @param ... Arguments to pass to `read.table()` or `read_excel()`
+#'
+#' @return A tibble giving the TPP protein quantity data relative to the lowest
+#'  temperature, \eqn{T_1}, as \emph{rel_quantity}, in a tidier format: 1 row
+#'  per protein observation.
+#' @export
+#'
+#' @importFrom rlang .data
+
+import_custom_format <- function(datafile,
+                                 config,
+                                 path = NULL,
+                                 table_format = c("wide", "long"),
+                                 protein_id_col_name = NULL,
+                                 quantity_pattern = NULL,
+                                 experiment_col_name = NULL,
+                                 quantity_col_name = NULL,
+                                 experiment_id_func = NULL,
+                                 seq_col_name = NULL,
+                                 seq_col_func = NULL,
+                                 silent = FALSE,
+                                 ...){
+
+  if(!silent){
+    cat("--------------------\n")
+    cat("TPP Data Import\n")
+    cat("--------------------\n")
+    cat("Read in:\n")
+    if(is.data.frame(datafile)){
+      cat("Data table supplied\n")
+    } else{
+      cat(datafile, "\n")
+    }
+    if(is.data.frame(config)){
+      cat("Configuration table supplied\n")
+    } else{
+      cat(config, "\n")
+    }
+  }
+
+  # Data/Config import
+  data_in_tbl <- multiformat_import(datafile, path)
+  config_tbl <- multiformat_import(config, path)
+
+  if(!silent) cat("--------------------\n")
+
+  # Default wide format
+  table_format <- table_format[1]
+
+  # Required columns:
+  # Protein ID, Peptide Precursor (if present), PG raw quantities
+  if(!is.null(quantity_pattern)){
+    quan_cols <- grep(quantity_pattern, colnames(data_in_tbl), value = TRUE)
+  }
+  if(table_format == "long" & !is.null(quantity_col_name)){
+    quan_cols <- quantity_col_name
+  }
+  if(is.null(quan_cols)){
+    if(!silent) cat("No quantity columns identified!\n")
+    return(NULL)
+  }
+  protein_id_col_name <-
+    colnames(data_in_tbl)[colnames(data_in_tbl) == protein_id_col_name]
+  if(length(protein_id_col_name) == 0){
+    if(!silent) cat("No protein ID columns identified!\n")
+    return(NULL)
+  }
+  experiment_col_name <-
+    colnames(data_in_tbl)[colnames(data_in_tbl) == experiment_col_name]
+  if(table_format == "long" & length(experiment_col_name) == 0){
+    if(!silent) cat("No experiment ID columns identified!\n")
+    return(NULL)
+  }
+  if(all(!is.null(seq_col_name),
+         !seq_col_name %in% colnames(data_in_tbl),
+         !silent)){
+    cat("Sequence column given does not match a column in data!\n")
+    seq_col_name <- NULL
+  }
+
+  TPP_cols <- c(protein_id_col_name,
+                seq_col_name,
+                experiment_col_name,
+                quan_cols)
+  TPP_tbl <- data_in_tbl[TPP_cols]
+  colnames(TPP_tbl)[1] <- "Protein_ID"
+  if(!is.null(seq_col_name)) colnames(TPP_tbl)[2] <- "Sequence"
+
+  if(!is.null(seq_col_func) & !is.null(seq_col_name)) {
+    TPP_tbl$Sequence <- seq_col_func(TPP_tbl$Sequence)
+  }
+
+
+  # If peptide sequences are given, get number of peptides and number of total
+  # matches. Else use total matches per protein
+
+  pep_N_tbl <- TPP_tbl
+  if(!is.null(seq_col_name)){
+    pep_N_tbl$Match_N <- 0
+    match_N_tbl <-
+      stats::aggregate(Match_N ~ Protein_ID + Sequence ,
+                       pep_N_tbl, FUN = length)
+    match_N_tbl$Pep_N <- 1
+    pep_N_tbl <-
+      stats::aggregate(cbind(Pep_N, Match_N) ~ Protein_ID,
+                       match_N_tbl, FUN = sum)
+  } else{
+    pep_N_tbl$Pep_N <- 0
+    pep_N_tbl <- stats::aggregate(Pep_N ~ Protein_ID, pep_N_tbl, FUN = length)
+  }
+
+  # Reduce to unique quantity values
+  TPP_tbl <-
+    TPP_tbl[c("Protein_ID", experiment_col_name, quan_cols)]
+  TPP_tbl <-
+    stats::aggregate(. ~ Protein_ID, TPP_tbl, FUN = \(x) x[1])
+  TPP_tbl <- merge(pep_N_tbl, TPP_tbl)
+
+  # Drop missing protein values
+  TPP_tbl <- TPP_tbl[TPP_tbl$Protein_ID != "",]
+
+  # Transform to long format if not already
+  if(table_format == "wide"){
+    if(!silent) cat("Pivoting to long table...\n")
+    TPP_tbl <-
+      stats::reshape(TPP_tbl,
+                     direction = "long",
+                     varying = quan_cols,
+                     timevar = "Experiment",
+                     v.names = "raw_quantity",
+                     idvar = "Protein_ID",
+                     times = quan_cols)
+
+  }
+
+  # Transform Experiment column
+  if(!is.null(experiment_id_func)){
+    if(!silent) cat("Transforming experiment names...\n")
+    TPP_tbl$Experiment <- experiment_id_func(TPP_tbl$Experiment)
+  }
+
+  # Match to Experiment values
+  if(!silent) cat("Matching to experiment config data...\n")
+  TPP_tbl <- merge(config_tbl, TPP_tbl)
+
+  # Get T1 values. relative quantity
+  if(!silent) cat("Finding relative quantity values...\n")
+  T1_tbl <- TPP_tbl[order(TPP_tbl$Temp),]
+  T1_tbl <- stats::aggregate(raw_quantity ~ Protein_ID + Condition + Replicate,
+                      T1_tbl, FUN = \(x) x[1])
+  colnames(T1_tbl)[4] <- "T1_quantity"
+  TPP_tbl <- merge(TPP_tbl, T1_tbl)
+  TPP_tbl$rel_quantity <- TPP_tbl$raw_quantity / TPP_tbl$T1_quantity
+  TPP_tbl <-
+    TPP_tbl[order(TPP_tbl$Protein_ID,
+                  TPP_tbl$Condition,
+                  TPP_tbl$Replicate,
+                  TPP_tbl$Temp),]
+
+  # Replicate should be discrete value
+  TPP_tbl$Replicate <- sprintf("%02d", TPP_tbl$Replicate)
+
+  cols_out <- c("Protein_ID", "Pep_N", "Match_N",
+                "Condition", "Replicate", "Temp",
+                "rel_quantity", "raw_quantity")
+  cols_out <- cols_out[cols_out %in% colnames(TPP_tbl)]
+  TPP_tbl <- TPP_tbl[cols_out]
+  n_proteins <- length(unique(TPP_tbl$Protein_ID))
+
+  if(!silent) {
+    cat("Data imported.\n")
+    cat("Found", n_proteins, "proteins.\n")
+    cat("--------------------\n")
+  }
+
+  tibble::as_tibble(TPP_tbl)
+}
+
+multiformat_import <- function(file, path = NULL, ...){
+  if(!is.data.frame(file)){
+
+    # (include "/" if not given)
+    if(!is.null(path)){
+      path <- sub("([^/])$", "\\1/", path)
+      file <- paste0(path, file)
+    }
+    if(file.exists(file)){
+
+      # Choose read in method from extension
+      file_extension <- toupper(sub(".*(\\.[^\\.]+$)", "\\1", file))
+      read_func <-
+        switch(file_extension,
+               ".XLSX" = readxl::read_xlsx,
+               ".XLS" = readxl::read_xls,
+               ".CSV" = utils::read.csv,
+               utils::read.delim
+        )
+      file <- do.call(read_func, c(file, list(...)))
+    } else {
+      file <-  NULL
+    }
+  }
+  file
+}

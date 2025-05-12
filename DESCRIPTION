@@ -19,7 +19,6 @@ Depends:
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0),
-    readxl
 Config/testthat/edition: 3
 Imports: 
     dplyr,
@@ -31,4 +30,5 @@ Imports:
     stats,
     tibble,
     tidyr,
-    writexl
+    writexl,
+    readxl

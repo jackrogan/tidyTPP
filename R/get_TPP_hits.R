@@ -99,7 +99,7 @@ get_TPP_hits <- function(
     ),
     control_name = "Control",
     to_export = "TPP_hits.xlsx",
-    to_plot = TRUE,
+    to_plot = FALSE,
     to_save = NULL,
     plot_separately = FALSE,
     silent = FALSE,
@@ -133,10 +133,10 @@ get_TPP_hits <- function(
 
   # Use mean absolute control difference
   control_tbl <-
-    aggregate(cbind(melt_point, diff_melt_point) ~ Protein_ID,
-              control_tbl,
-              FUN = \(x) mean(abs(x), na.rm = TRUE),
-              na.action = na.pass)
+    stats::aggregate(cbind(melt_point, diff_melt_point) ~ Protein_ID,
+                     control_tbl,
+                     FUN = \(x) mean(abs(x), na.rm = TRUE),
+                     na.action = stats::na.pass)
   colnames(control_tbl)[2] <- "mean_control_melt_point"
   colnames(control_tbl)[3] <- "abs_diff_melt_control"
   TPP_hits <- merge(TPP_hits[TPP_hits$Condition != control_name,], control_tbl)
@@ -187,8 +187,10 @@ get_TPP_hits <- function(
           TPP_hits[
             TPP_hits$max_min_comparison_slope < hit_criteria$slope_threshold,]
       } else {
-        if(!silent) cat("Warning: Cannot filter by steepest comparison slope,",
-                        "missing 'min_comparison_slope' column.\n")
+        if(!silent) {
+          message("Warning: Cannot filter by steepest comparison slope, ",
+                  "missing 'min_comparison_slope' column.\n")
+        }
       }
     }
     TPP_hits <- TPP_hits[c(starting_colnames, "max_adj_pvalue")]
@@ -201,7 +203,7 @@ get_TPP_hits <- function(
       gsub("^(.*)_\\d+(_vs_.*)_\\d+$", "\\1\\2", TPP_hits$Comparison)
 
     TPP_hits <-
-      aggregate(
+      stats::aggregate(
         cbind(max_adj_pvalue, melt_point, mean_control_melt_point,
               diff_melt_point, abs_diff_melt_control) ~
           Protein_ID + Condition + Comparison,
@@ -227,7 +229,7 @@ get_TPP_hits <- function(
     }
 
     # Plot top hits
-    if(to_plot | !is.null(to_save)){
+    if((to_plot | !is.null(to_save)) & any(colnames(TPP_data) == "Temp")){
       if(!silent) cat("Plotting hit melting curves...\n")
       hit_proteins <- unique(TPP_hits$Protein_ID)
       hit_quan_data <- TPP_data[which(TPP_data$Protein_ID %in% hit_proteins),]
@@ -239,11 +241,14 @@ get_TPP_hits <- function(
       lapply(hit_quan_data, plot_melt, to_plot = to_plot, to_save = to_save, ...)
     }
 
+    if(!silent) {
+      cat(length(unique(TPP_hits$Protein_ID)),
+          "hits found.\n--------------------\n")
+    }
   } else {
-    if(!silent) cat("No hits found.\n")
+    if(!silent) cat("No hits found.\n--------------------\n")
     TPP_hits <- TPP_hits[!is.na(TPP_hits$Protein_ID),]
   }
 
-  if(!silent) cat("--------------------\n")
   tibble::as_tibble(TPP_hits)
 }

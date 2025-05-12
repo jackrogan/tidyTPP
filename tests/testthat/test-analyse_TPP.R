@@ -1,4 +1,4 @@
-test_that("Comparison dataframe is generated correctly for ATIC data", {
+test_that("create_comparisons_tbl() works", {
   x <- MP_data_ATIC
   reps <- unique(x$Replicate)
   conds <- unique(x$Condition)
@@ -12,24 +12,40 @@ test_that("Comparison dataframe is generated correctly for ATIC data", {
   expect_identical(comparisons, expected_comparisons)
 })
 
-test_that("Correct melting points are calculated for ATIC treated/control", {
+test_that("create_control_comparison_tbl() works", {
+  x <- MP_data_ATIC
+  reps <- unique(x$Replicate)
+  conds <- unique(x$Condition)
+  controls <- create_control_comparison_tbl(reps, "Control")
+  expected_controls <- data.frame(
+    Condition_01 = c("Control"),
+    Replicate_01 = c("01"),
+    Condition_02 = c("Control") ,
+    Replicate_02 = c( "02")
+  )
+  expect_identical(controls, expected_controls)
+})
+
+test_that("find_melting_point_diffs() works", {
   x <- MP_data_ATIC
   reps <- unique(x$Replicate)
   conds <- unique(x$Condition)
   comparisons <- create_comparisons_tbl(conds, reps, "Control")
+  controls <- create_control_comparison_tbl(reps, "Control")
+  comparisons <- rbind(comparisons, controls)
   stat_x <- find_melting_point_diffs(x, comparisons)
 
   expect_equal(stat_x$diff_melt_point, MP_stat_data_ATIC$diff_melt_point)
 })
 
-test_that("Correct Minimum R2 is calculated for ATIC treated/control", {
+test_that("find_exp_stats() works for R2", {
   x <- MP_stat_data_ATIC
   stat_x <- find_exp_stats(x, "min", "R_sq", "Protein_ID")
 
   expect_equal(stat_x$min_R_sq, x$min_R_sq)
 })
 
-test_that("Correct p-values are calculated for ATIC treated/control", {
+test_that("calculate_binwise_pvale() works as expected", {
   x <- MP_stat_data_ATIC[3:4,]
 
   pval_x <- calculate_binwise_pvalue(x)
