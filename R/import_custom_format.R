@@ -1,5 +1,24 @@
 #' Import TPP data from proteomics tabular data into tidier tibble format.
 #'
+#' @description
+#' `import_custom_format()` imports tabular proteomics data from a delimited
+#' text file or \emph{.xlsx} spreadsheet and prepares it for TPP data analysis,
+#' allowing a specification for a given proteomics software file type to be
+#' easily and consistently produced:
+#'
+#' * Columns specified using the given arguments are selected from the data,
+#'   according to the vendor file format
+#'
+#' * The necessary transformations are performed so the data can be analysed for
+#'   \emph{thermal protein profiling (TPP)} data: combining data points so that
+#'   a single data point is presented for each experiment condition combination
+#'   (treatment, temperature, \emph{etc.}) and recording the number of peptide
+#'   hits for each protein as far as that's possible from the data - this allows
+#'   the use of minimum matches as a quality control.
+#'
+#' * The data is reshaped into a tidier long format `tibble`, with one
+#'   observation per row, one column per statistic.
+#'
 #' @param datafile Character. Specify a filename for a delimited text file or
 #' \emph{.xlsx} spreadsheet containing the protein quantity data.
 #' @param config  Either a character, specifying the file name of a delimited

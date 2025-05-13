@@ -91,5 +91,20 @@ temperature, \eqn{T_1}, as \emph{rel_quantity}, in a tidier format: 1 row
 per protein observation.
 }
 \description{
-Import TPP data from proteomics tabular data into tidier tibble format.
+\code{import_custom_format()} imports tabular proteomics data from a delimited
+text file or \emph{.xlsx} spreadsheet and prepares it for TPP data analysis,
+allowing a specification for a given proteomics software file type to be
+easily and consistently produced:
+\itemize{
+\item Columns specified using the given arguments are selected from the data,
+according to the vendor file format
+\item The necessary transformations are performed so the data can be analysed for
+\emph{thermal protein profiling (TPP)} data: combining data points so that
+a single data point is presented for each experiment condition combination
+(treatment, temperature, \emph{etc.}) and recording the number of peptide
+hits for each protein as far as that's possible from the data - this allows
+the use of minimum matches as a quality control.
+\item The data is reshaped into a tidier long format \code{tibble}, with one
+observation per row, one column per statistic.
+}
 }
