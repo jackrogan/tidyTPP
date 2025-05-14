@@ -91,7 +91,7 @@ MP_stat_data_ATIC <-
 quan_data_ATIC <-
   data.frame(
     "Protein_ID" = rep("ATIC", times = 40),
-    "Pep_N" = rep(as.integer(40), times = 40),
+    "Pep_N" = rep(as.integer(36), times = 40),
     "Match_N" = rep(as.integer(62), times = 40),
     "Condition" = rep(c("Control", "Treated"), each = 20),
     "Replicate" = rep(c("01","02"), each = 10, times = 2),

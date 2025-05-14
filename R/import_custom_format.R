@@ -9,12 +9,15 @@
 #' * Columns specified using the given arguments are selected from the data,
 #'   according to the vendor file format
 #'
+#' * Experiment condition combinations (treatment, temperature, \emph{etc.}) are
+#'   loaded from a separate config file and matched to recorded data
+#'
 #' * The necessary transformations are performed so the data can be analysed for
 #'   \emph{thermal protein profiling (TPP)} data: combining data points so that
-#'   a single data point is presented for each experiment condition combination
-#'   (treatment, temperature, \emph{etc.}) and recording the number of peptide
-#'   hits for each protein as far as that's possible from the data - this allows
-#'   the use of minimum matches as a quality control.
+#'   a single data point is presented for each experiment combination and
+#'   recording the number of peptide hits for each protein as far as that's
+#'   possible from the data - this allows the use of minimum matches as a
+#'   quality control.
 #'
 #' * The data is reshaped into a tidier long format `tibble`, with one
 #'   observation per row, one column per statistic.
@@ -63,10 +66,17 @@
 #'  names for quantity columns into experiment IDs matching the contents of the
 #'  `Experiment` column from the `config` data. If not given, samples are
 #'  assigned a number based on order of appearance in the data.
+#' @param pep_n_col_name Optional character. The exact name of a column in the
+#'  data from which number of peptide matches should be taken. If given, assumes
+#'  single record per protein and does not use sequences.
+#' @param match_n_col_name Optional character. The exact name of a column in the
+#'  data from which number of PSM matches should be taken. Used if present and
+#'  `pep_col_name` is given.
 #' @param seq_col_name Optional character. The exact name of a column in the
-#'  data from which peptide sequences should be taken. If not given, number of
-#'  peptide IDs per protein will be estimated from number of identical rows in
-#'  data per protein.
+#'  data from which peptide sequences should be taken to calculate number of
+#'  peptide matches. Will be ignored if `pep_col_name` is given. If not given,
+#'  number of peptide IDs per protein will be estimated from number of identical
+#'  rows in data per protein.
 #' @param seq_col_func Optional function to transform peptide sequence column to
 #'  extract peptide canonical sequence (used to differentiate peptide matches
 #'  per protein from total spectrum matches)
@@ -78,7 +88,40 @@
 #'  per protein observation.
 #' @export
 #'
-#' @importFrom rlang .data
+#' @examples
+#' # Single protein - Spectronaut format
+#' sp_report_file <-
+#'   system.file("extdata", "ATIC_Peptide_Report.csv", package = "tidyTPP")
+#' config_file <-
+#'   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+#'
+#' # Load data using paramaters for exported spectronaut report .csv
+#' # Regex function to extract experiment ID:
+#' # digits following "Sample_"
+#' experiment_id_func = \(x) gsub(".*Sample_(\\d+)_.*", "\\1", x)
+#'
+#' # Regex function to extract canonical sequence from precursor ID:
+#' # remove leading and trailing "_", charge (as ".x") where x is a digit,
+#' # and modification labels in "[]"
+#' seq_col_func = \(x) gsub("_|(\\.\\d+)|(\\[.*\\])", "", x)
+#'
+#' sp_tbl <- import_custom_format(
+#'   # Report file
+#'   datafile = sp_report_file,
+#'   # Configuration
+#'   config = config_file,
+#'   # Spectronaut uses wider data format
+#'   table_format = "wide",
+#'   # Use quantity column pattern for multiple quantity columns
+#'   protein_id_col_name = "PG.Genes",
+#'   quantity_pattern = "PG.Quantity",
+#'   experiment_id_func = experiment_id_func,
+#'   # Use sequence column to generate number of peptide matches
+#'   seq_col_name = "EG.PrecursorId",
+#'   seq_col_func = seq_col_func
+#' )
+#' sp_tbl
+#'
 
 import_custom_format <- function(datafile,
                                  config,
@@ -89,6 +132,8 @@ import_custom_format <- function(datafile,
                                  experiment_col_name = NULL,
                                  quantity_col_name = NULL,
                                  experiment_id_func = NULL,
+                                 pep_n_col_name = NULL,
+                                 match_n_col_name = NULL,
                                  seq_col_name = NULL,
                                  seq_col_func = NULL,
                                  silent = FALSE,
@@ -128,7 +173,7 @@ import_custom_format <- function(datafile,
   if(table_format == "long" & !is.null(quantity_col_name)){
     quan_cols <- quantity_col_name
   }
-  if(is.null(quan_cols)){
+  if(is.null(quan_cols) | length(quan_cols) == 0){
     if(!silent) cat("No quantity columns identified!\n")
     return(NULL)
   }
@@ -152,49 +197,62 @@ import_custom_format <- function(datafile,
   }
 
   TPP_cols <- c(protein_id_col_name,
+                pep_n_col_name,
+                match_n_col_name,
                 seq_col_name,
                 experiment_col_name,
                 quan_cols)
   TPP_tbl <- data_in_tbl[TPP_cols]
   colnames(TPP_tbl)[1] <- "Protein_ID"
-  if(!is.null(seq_col_name)) colnames(TPP_tbl)[2] <- "Sequence"
 
-  if(!is.null(seq_col_func) & !is.null(seq_col_name)) {
-    TPP_tbl$Sequence <- seq_col_func(TPP_tbl$Sequence)
+  # If Peptide matches and PSM matches are given, use those, otherwise assume
+  # multiple rows per protein and aggregate
+  if(!is.null(pep_n_col_name)){
+    colnames(TPP_tbl)[colnames(TPP_tbl) == pep_n_col_name] <- "Pep_N"
+    if(!is.null(match_n_col_name)){
+      colnames(TPP_tbl)[colnames(TPP_tbl) == match_n_col_name] <- "Match_N"
+    }
+
+  } else {
+
+    if(!is.null(seq_col_name)) colnames(TPP_tbl)[2] <- "Sequence"
+
+    if(!is.null(seq_col_func) & !is.null(seq_col_name)) {
+      TPP_tbl$Sequence <- seq_col_func(TPP_tbl$Sequence)
+    }
+
+
+    # If peptide sequences are given, get number of peptides and number of total
+    # matches. Else use total matches per protein
+
+    pep_N_tbl <- TPP_tbl
+    if(!is.null(seq_col_name)){
+      pep_N_tbl$Match_N <- 0
+      match_N_tbl <-
+        stats::aggregate(Match_N ~ Protein_ID + Sequence ,
+                         pep_N_tbl, FUN = length)
+      match_N_tbl$Pep_N <- 1
+      pep_N_tbl <-
+        stats::aggregate(cbind(Pep_N, Match_N) ~ Protein_ID,
+                         match_N_tbl, FUN = sum)
+    } else{
+      pep_N_tbl$Pep_N <- 0
+      pep_N_tbl <- stats::aggregate(Pep_N ~ Protein_ID, pep_N_tbl, FUN = length)
+    }
+
+    # Reform data table
+    TPP_tbl <- TPP_tbl[c("Protein_ID", experiment_col_name, quan_cols)]
+    TPP_tbl <- merge(pep_N_tbl, TPP_tbl)
   }
-
-
-  # If peptide sequences are given, get number of peptides and number of total
-  # matches. Else use total matches per protein
-
-  pep_N_tbl <- TPP_tbl
-  if(!is.null(seq_col_name)){
-    pep_N_tbl$Match_N <- 0
-    match_N_tbl <-
-      stats::aggregate(Match_N ~ Protein_ID + Sequence ,
-                       pep_N_tbl, FUN = length)
-    match_N_tbl$Pep_N <- 1
-    pep_N_tbl <-
-      stats::aggregate(cbind(Pep_N, Match_N) ~ Protein_ID,
-                       match_N_tbl, FUN = sum)
-  } else{
-    pep_N_tbl$Pep_N <- 0
-    pep_N_tbl <- stats::aggregate(Pep_N ~ Protein_ID, pep_N_tbl, FUN = length)
-  }
-
-  # Reduce to unique quantity values
-  TPP_tbl <-
-    TPP_tbl[c("Protein_ID", experiment_col_name, quan_cols)]
-  TPP_tbl <-
-    stats::aggregate(. ~ Protein_ID, TPP_tbl, FUN = \(x) x[1])
-  TPP_tbl <- merge(pep_N_tbl, TPP_tbl)
-
+  # Reduce to single protein value
+  TPP_tbl <- stats::aggregate(. ~ Protein_ID, TPP_tbl, FUN = \(x) x[1])
   # Drop missing protein values
   TPP_tbl <- TPP_tbl[TPP_tbl$Protein_ID != "",]
 
   # Transform to long format if not already
   if(table_format == "wide"){
     if(!silent) cat("Pivoting to long table...\n")
+    print(TPP_tbl)
     TPP_tbl <-
       stats::reshape(TPP_tbl,
                      direction = "long",

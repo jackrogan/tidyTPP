@@ -4,7 +4,7 @@
 \alias{import_spectronaut}
 \title{Import TPP data from Spectronaut report into tidier tibble format.}
 \usage{
-import_spectronaut(datafile, config, path = NULL, silent = FALSE)
+import_spectronaut(datafile, config, path = NULL, silent = FALSE, ...)
 }
 \arguments{
 \item{datafile}{Character. Specify a Spectronaut .csv report filename
@@ -23,6 +23,8 @@ This should take the form of a table with the column names
 data and configuration files. If given, this will be appended to both paths.}
 
 \item{silent}{Boolean. If true, will run silently, without console output.}
+
+\item{...}{Arguments to pass to \code{read.table()} or \code{read_excel()}}
 }
 \value{
 A tibble giving the TPP protein quantity data relative to the lowest

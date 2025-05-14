@@ -14,6 +14,8 @@ import_custom_format(
   experiment_col_name = NULL,
   quantity_col_name = NULL,
   experiment_id_func = NULL,
+  pep_n_col_name = NULL,
+  match_n_col_name = NULL,
   seq_col_name = NULL,
   seq_col_func = NULL,
   silent = FALSE,
@@ -72,10 +74,19 @@ names for quantity columns into experiment IDs matching the contents of the
 \code{Experiment} column from the \code{config} data. If not given, samples are
 assigned a number based on order of appearance in the data.}
 
+\item{pep_n_col_name}{Optional character. The exact name of a column in the
+data from which number of peptide matches should be taken. If given, assumes
+single record per protein and does not use sequences.}
+
+\item{match_n_col_name}{Optional character. The exact name of a column in the
+data from which number of PSM matches should be taken. Used if present and
+\code{pep_col_name} is given.}
+
 \item{seq_col_name}{Optional character. The exact name of a column in the
-data from which peptide sequences should be taken. If not given, number of
-peptide IDs per protein will be estimated from number of identical rows in
-data per protein.}
+data from which peptide sequences should be taken to calculate number of
+peptide matches. Will be ignored if \code{pep_col_name} is given. If not given,
+number of peptide IDs per protein will be estimated from number of identical
+rows in data per protein.}
 
 \item{seq_col_func}{Optional function to transform peptide sequence column to
 extract peptide canonical sequence (used to differentiate peptide matches
@@ -98,13 +109,50 @@ easily and consistently produced:
 \itemize{
 \item Columns specified using the given arguments are selected from the data,
 according to the vendor file format
+\item Experiment condition combinations (treatment, temperature, \emph{etc.}) are
+loaded from a separate config file and matched to recorded data
 \item The necessary transformations are performed so the data can be analysed for
 \emph{thermal protein profiling (TPP)} data: combining data points so that
-a single data point is presented for each experiment condition combination
-(treatment, temperature, \emph{etc.}) and recording the number of peptide
-hits for each protein as far as that's possible from the data - this allows
-the use of minimum matches as a quality control.
+a single data point is presented for each experiment combination and
+recording the number of peptide hits for each protein as far as that's
+possible from the data - this allows the use of minimum matches as a
+quality control.
 \item The data is reshaped into a tidier long format \code{tibble}, with one
 observation per row, one column per statistic.
 }
+}
+\examples{
+# Single protein - Spectronaut format
+sp_report_file <-
+  system.file("extdata", "ATIC_Peptide_Report.csv", package = "tidyTPP")
+config_file <-
+  system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+
+# Load data using paramaters for exported spectronaut report .csv
+# Regex function to extract experiment ID:
+# digits following "Sample_"
+experiment_id_func = \(x) gsub(".*Sample_(\\\\d+)_.*", "\\\\1", x)
+
+# Regex function to extract canonical sequence from precursor ID:
+# remove leading and trailing "_", charge (as ".x") where x is a digit,
+# and modification labels in "[]"
+seq_col_func = \(x) gsub("_|(\\\\.\\\\d+)|(\\\\[.*\\\\])", "", x)
+
+sp_tbl <- import_custom_format(
+  # Report file
+  datafile = sp_report_file,
+  # Configuration
+  config = config_file,
+  # Spectronaut uses wider data format
+  table_format = "wide",
+  # Use quantity column pattern for multiple quantity columns
+  protein_id_col_name = "PG.Genes",
+  quantity_pattern = "PG.Quantity",
+  experiment_id_func = experiment_id_func,
+  # Use sequence column to generate number of peptide matches
+  seq_col_name = "EG.PrecursorId",
+  seq_col_func = seq_col_func
+)
+sp_tbl
+
 }
