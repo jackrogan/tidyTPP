@@ -128,7 +128,6 @@ sp_report_file <-
 config_file <-
   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
 
-# Load data using paramaters for exported spectronaut report .csv
 # Regex function to extract experiment ID:
 # digits following "Sample_"
 experiment_id_func = \(x) gsub(".*Sample_(\\\\d+)_.*", "\\\\1", x)
@@ -138,6 +137,7 @@ experiment_id_func = \(x) gsub(".*Sample_(\\\\d+)_.*", "\\\\1", x)
 # and modification labels in "[]"
 seq_col_func = \(x) gsub("_|(\\\\.\\\\d+)|(\\\\[.*\\\\])", "", x)
 
+# Load data using paramaters for exported spectronaut report .csv
 sp_tbl <- import_custom_format(
   # Report file
   datafile = sp_report_file,
@@ -153,6 +153,6 @@ sp_tbl <- import_custom_format(
   seq_col_name = "EG.PrecursorId",
   seq_col_func = seq_col_func
 )
-sp_tbl
 
+sp_tbl
 }

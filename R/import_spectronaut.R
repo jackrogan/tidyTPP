@@ -8,6 +8,20 @@
 #'  temperature, \eqn{T_1}, as \emph{rel_quantity}, in a tidier format: 1 row
 #'  per protein observation.
 #' @export
+#'
+#' @examples
+#'
+#' # Single protein - Spectronaut format
+#' sp_report_file <-
+#'   system.file("extdata", "ATIC_Peptide_Report.csv", package = "tidyTPP")
+#' config_file <-
+#'   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+#'
+#' # Import data
+#' sp_tbl <- import_spectronaut(sp_report_file, config_file)
+#'
+#' sp_tbl
+
 import_spectronaut <- function(datafile,
                                config,
                                path = NULL,
@@ -18,7 +32,7 @@ import_spectronaut <- function(datafile,
   # digits following "Sample_"
   experiment_id_func = \(x) gsub(".*Sample_(\\d+)_.*", "\\1", x)
 
-  # Regext function to extract canonical sequence from precursor ID:
+  # Regex function to extract canonical sequence from precursor ID:
   # remove leading and trailing "_", charge (as ".x") where x is a digit,
   # and modification labels in "[]"
   seq_col_func = \(x) gsub("_|(\\.\\d+)|(\\[.*\\])", "", x)

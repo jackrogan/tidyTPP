@@ -95,7 +95,6 @@
 #' config_file <-
 #'   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
 #'
-#' # Load data using paramaters for exported spectronaut report .csv
 #' # Regex function to extract experiment ID:
 #' # digits following "Sample_"
 #' experiment_id_func = \(x) gsub(".*Sample_(\\d+)_.*", "\\1", x)
@@ -105,6 +104,7 @@
 #' # and modification labels in "[]"
 #' seq_col_func = \(x) gsub("_|(\\.\\d+)|(\\[.*\\])", "", x)
 #'
+#' # Load data using paramaters for exported spectronaut report .csv
 #' sp_tbl <- import_custom_format(
 #'   # Report file
 #'   datafile = sp_report_file,
@@ -120,8 +120,8 @@
 #'   seq_col_name = "EG.PrecursorId",
 #'   seq_col_func = seq_col_func
 #' )
-#' sp_tbl
 #'
+#' sp_tbl
 
 import_custom_format <- function(datafile,
                                  config,
@@ -252,7 +252,6 @@ import_custom_format <- function(datafile,
   # Transform to long format if not already
   if(table_format == "wide"){
     if(!silent) cat("Pivoting to long table...\n")
-    print(TPP_tbl)
     TPP_tbl <-
       stats::reshape(TPP_tbl,
                      direction = "long",
