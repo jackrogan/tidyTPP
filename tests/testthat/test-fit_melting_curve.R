@@ -4,7 +4,10 @@ test_that("ATIC curve fit returns tibble", {
   params <-
     lapply(1:total,
            function(i) {
-             fit_melting_curve(x_sep[[i]], protein_num = i, protein_total = total)
+             fit_melting_curve(x_sep[[i]],
+                               protein_num = i,
+                               protein_total = total,
+                               silent = TRUE)
            }) |>
     Reduce(rbind, x = _)
 
