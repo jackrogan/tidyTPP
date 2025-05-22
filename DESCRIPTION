@@ -28,4 +28,5 @@ Imports:
     stats,
     tibble,
     writexl,
-    readxl
+    readxl,
+    limma

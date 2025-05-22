@@ -77,8 +77,10 @@ fit_melt_by_experiment <-
                        "protein_total" = total,
                        "silent" = silent),
                        dots))
+
       if(!is.null(params_x)) {
-        params_x <- cbind(data_sep[[x]][experiment_cols][1,], params_x)
+        params_x <-
+          cbind(data_sep[[x]][experiment_cols][1,, drop = FALSE], params_x)
       }
       params_x
     }
@@ -110,7 +112,6 @@ fit_melt_by_experiment <-
       ),
       envir = environment())
 
-      time_total <- proc.time()
       params <-
         parallel::parLapply(cl, 1:length(data_sep), fit_curve_x) |>
         Reduce(rbind, x = _)
@@ -121,6 +122,7 @@ fit_melt_by_experiment <-
       if(!silent) {
         cat("Estimated total process time:", round(total*0.23, 2), "s\n")
       }
+
       params <-
         lapply(1:length(data_sep), fit_curve_x) |>
         Reduce(rbind, x = _)
