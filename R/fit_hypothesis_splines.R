@@ -38,14 +38,14 @@ get_spline_model_details <- function(sp_fit){
   if (inherits(sp_fit, "lm")){
 
     # Residual sum of squares
-    fit_RSS <- deviance(sp_fit)
+    fit_RSS <- stats::deviance(sp_fit)
 
     # Residual standard deviation (sigma)
-    fit_sigma <- sigma(sp_fit)
+    fit_sigma <- stats::sigma(sp_fit)
 
     # Number of observations / coefficients
     fit_n_obs <- stats::nobs(sp_fit)
-    fit_n_coeffs <- length(coef(sp_fit))
+    fit_n_coeffs <- length(stats::coef(sp_fit))
 
     # Log-likelihood / Corrected Akaike information criterion (AICc)
     fit_log_lik <- stats::logLik(sp_fit)
@@ -89,7 +89,7 @@ get_fit_details <- function(x_tbl, spline_formula, hypothesis){
 
 # Function to fit linear model natural spline
 get_natural_spline_lm <- function(x_tbl, formula, silent = TRUE){
-  spline_lm <- try(lm(formula, x_tbl), silent = silent)
+  spline_lm <- try(stats::lm(formula, x_tbl), silent = silent)
   if(inherits(spline_lm, "try-error")) spline_lm <- NULL
   lm_details <- get_spline_model_details(spline_lm)
 

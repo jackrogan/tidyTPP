@@ -149,7 +149,10 @@ get_TPP_hits <- function(
 
   TPP_hits <-
     find_exp_stats(TPP_hits,
-                    stat_func = c("min", "max", "all_same_sign", "min_abs"),
+                    stat_func = c(min = min,
+                                  max = max,
+                                  all_same_sign = \(x) all(x > 0) | all(x < 0),
+                                  min_abs = \(x) min(abs(x))),
                     stat_column = stat_columns_present,
                     experiment_cols = c("Protein_ID", "Condition"))
 

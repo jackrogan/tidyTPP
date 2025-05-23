@@ -16,7 +16,7 @@ get_NPARC_pval <- function(TPP_tbl,
   }
 
   comparisons <- comparisons[c("Condition_01", "Condition_02")]
-  comparisons <- distinct(comparisons)
+  comparisons <- unique(comparisons)
 
   # Loop over condition combinations
   NPARC_tbl <- NULL
@@ -197,24 +197,28 @@ get_NPARC_pval <- function(TPP_tbl,
   tibble::as_tibble(NPARC_tbl)
 }
 
-# Function to plot F-score density distribution
+
+# Plot F-score density distribution
+#' @importFrom rlang .data
 build_f_density_plot <- function(f_tbl, f_title = NULL){
   f_tbl$facet_label <-
     paste0("df1 = ", f_tbl$num_df,
            "; df2 = ", f_tbl$denom_df)
 
   f_score_plot <-
-    ggplot2::ggplot(f_tbl, ggplot2::aes(x = F_scaled)) +
+    ggplot2::ggplot(f_tbl, ggplot2::aes(x = .data$F_scaled)) +
     ggplot2::geom_density(
       ggplot2::aes(fill = "Calculated"),
       show.legend = FALSE) +
     ggplot2::geom_line(
       ggplot2::aes(
-        y = stats::df(F_scaled, df1 = num_df, df2 = denom_df)),
+        y = stats::df(.data$F_scaled,
+                      df1 = .data$num_df,
+                      df2 = .data$denom_df)),
       linewidth = 0.75) +
     ggplot2::theme_bw() +
     ggplot2::lims(x = c(0,10)) +
-    ggplot2::facet_wrap(~ facet_label) +
+    ggplot2::facet_wrap(~ .data$facet_label) +
     ggplot2::labs(
       title = f_title,
       subtitle = "F-Score distribution by degrees of freedom",
@@ -223,18 +227,20 @@ build_f_density_plot <- function(f_tbl, f_title = NULL){
     )
 }
 
-# Function to plot p-value density histogram
+# Plot p-value density histogram
+#' @importFrom rlang .data
 build_p_hist_plot <- function(p_tbl, p_title = NULL){
   p_val_plot <-
-    ggplot2::ggplot(p_tbl, ggplot2::aes(x = p_adj_NPARC)) +
+    ggplot2::ggplot(p_tbl, ggplot2::aes(x = .data$p_adj_NPARC)) +
     ggplot2::geom_histogram(
-      ggplot2::aes(y = ..density.., fill = "Calculated"),
+      ggplot2::aes(
+        y = ggplot2::after_stat(!!str2lang("density")), fill = "Calculated"),
       boundary = 0,
       bins = 30,
       show.legend = FALSE,
       colour = "black") +
     ggplot2::geom_line(
-      ggplot2::aes(y = stats::dunif(p_adj_NPARC)),
+      ggplot2::aes(y = stats::dunif(.data$p_adj_NPARC)),
       linewidth = 0.75) +
     ggplot2::theme_bw() +
     # ggplot2::facet_wrap(~ facet_label) +
