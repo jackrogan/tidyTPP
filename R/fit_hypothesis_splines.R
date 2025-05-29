@@ -4,7 +4,7 @@ fit_hypothesis_splines <- function(n, x_tbl, d_f_total, silent = FALSE){
   d_f <- d_f_total[n]
   num_total <- length(d_f_total)
   # Build linear model formula
-  spline_formula <- paste0("rel_quantity ~ splines::ns(Temp, df = ", d_f, ")")
+  spline_formula <- paste0("quantity ~ splines::ns(Temp, df = ", d_f, ")")
   alt_spline_formula <- paste0(spline_formula, " * Condition")
 
   if(!silent) {
@@ -60,7 +60,7 @@ get_spline_model_details <- function(sp_fit){
 
     fit_RSS <- NA
     fit_sigma <- NA
-    fit_n_Coeffs <- NA
+    fit_n_coeffs <- NA
     fit_n_obs <- NA
     fit_log_lik <- NA
     fit_AICc <- NA

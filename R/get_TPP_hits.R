@@ -127,7 +127,6 @@ get_TPP_hits <- function(
                  "diff_melt_point", "min_comparison_slope",
                  "adj_pvalue")]
   TPP_hits <- unique(TPP_hits)
-
   # Move control delta-Tm to its own column.
   control_tbl <- TPP_hits[TPP_hits$Condition == control_name,]
 

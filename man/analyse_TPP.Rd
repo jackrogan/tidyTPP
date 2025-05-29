@@ -9,7 +9,10 @@ analyse_TPP(
   comparisons = NULL,
   quantity_column = "rel_quantity",
   control_name = "Control",
+  p_value_methods = c("melting_point", "NPARC"),
   silent = FALSE,
+  to_plot = FALSE,
+  to_save = NULL,
   ...
 )
 }
@@ -47,21 +50,11 @@ protein quantity values in \code{TPP_tbl}}
 \item{control_name}{Character. Character string that matches the control
 experiment in \code{TPP_tbl$Condition}}
 
-\item{silent}{Boolean. If \code{TRUE}, no console output is shown}
+\item{p_value_methods}{Character. Vector of names of statistical significance
+approaches to use.
 
-\item{...}{Further arguments to be passed to \code{\link[=fit_melt_by_experiment]{fit_melt_by_experiment()}} and
-\code{\link[=nls_multstart]{nls_multstart()}}}
-}
-\value{
-A \code{tibble} containing all data in TPP_tbl, with additional calculated
-columns (where possible) detaling curve parameters and comparison statistics
-}
-\description{
-\code{analyse_TPP()} transforms \emph{Thermal Protein Profiling} (TPP) relative
-intensity data, fitting sigmoidal melting curves to the presumably
-normalised data, generating curve parameters - including melting points,
-then calculating statistical parameters including p-value as described by
-Savitsky \emph{et al.} 2014:
+Include "melting_point" to calculate p-value from melting-point differences
+as described by Savitsky \emph{et al.} 2014:
 \itemize{
 \item Melting point differences (\eqn{\Delta T_m}) are found and filtered to
 those for which \eqn{R^2 > 0.8} for all observations and
@@ -76,6 +69,48 @@ all measurements binwise.
 Benjamini-Hochberg procedure to control the false discovery rate
 (\emph{FDR}).
 }
+
+Include "NPARC" to calculate F-Score and p-value with nonparametric
+analysis of response curves \emph{(NPARC)} as described by Childs
+\emph{et al.} 2019:
+\itemize{
+\item For each protein and condition comparison, assume a null hypothesis
+\eqn{H_{null}} (measurements from both conditions can be modelled with the
+same sigmoidal melting curve) and alternate hypothesis \eqn{H_{alt}}
+(measurements each condition can be modelled with separate sigmoidal
+melting curve.)
+\item Curves are fitted to each hypothesis for each protein, and the degrees
+of freedom estimated for each curve fit.
+\item The F-statistic and p-value is computed using the residual sum of squares
+\emph{RSS} from \eqn{H_{alt}} and \eqn{H_{null}} calculated degrees
+of freedom for for each protein and condition comparison.
+\item p-values are adjusted by applying the
+Benjamini-Hochberg procedure to control the false discovery rate
+(\emph{FDR}).
+}}
+
+\item{silent}{Boolean. If \code{TRUE}, no console output is shown}
+
+\item{to_plot}{Boolean. If true, will generate distribution plots of
+F-statistic and p-value on calculating \emph{NPARC} statistics}
+
+\item{to_save}{Character. If supplied, will generate distribution plots of
+F-statistic and p-value and save with \code{\link[=ggsave]{ggsave()}}}
+
+\item{...}{Further arguments to be passed to \code{\link[=fit_melt_by_experiment]{fit_melt_by_experiment()}} and
+\code{\link[=nls_multstart]{nls_multstart()}}}
+}
+\value{
+A \code{tibble} containing all data in TPP_tbl, with additional calculated
+columns (where possible) detaling curve parameters and comparison statistics
+}
+\description{
+\code{analyse_TPP()} transforms \emph{Thermal Protein Profiling} (TPP) relative
+intensity data, fitting sigmoidal melting curves to the presumably
+normalised data, generating curve parameters - including melting points,
+then calculating statistical parameters - optionally including melting-point
+difference-based p-value as described by Savitsky \emph{et al.} 2014, and
+NPARC F-score and p-value as described by Childs \emph{et al.} 2019.
 }
 \examples{
 # Minimal data - two-protein melt curve
@@ -85,11 +120,17 @@ norm_x <- normalise_TPP(x)
 # Analyse - single core curve fitting
 analyse_TPP(norm_x, max_cores = 1)
 
+# Analyse - melting-point p-value only
+analyse_TPP(norm_x, max_cores = 1, p_value_methods = "melting_point")
+
+# Analyse - NPARC p-value only and plot F-Score, p-value distributions
+analyse_TPP(norm_x, max_cores = 1, p_value_methods = "NPARC", to_plot = TRUE)
+
 # Custom comparisons, e.g. compare treated replicates
 comparison_tbl <-  data.frame(
   Condition_01 = c("Treated", "Treated", "Treated"),
   Replicate_01 = c("01", "02", "01"),
-  Condition_02 = c("Control", "Control","Treated") ,
+  Condition_02 = c("Control", "Control", "Treated") ,
   Replicate_02 = c("01", "02", "02")
 )
 
@@ -100,8 +141,12 @@ analyse_TPP(
 )
 }
 \references{
-Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
+Savitski M. M. \emph{et al.} Tracking cancer drugs in living cells by
 thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+
+Childs, D., \emph{et al.} Non-Parametric Analysis of Thermal Proteome
+Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
+Proteomics}, 18, 2506-2515, (2019)
 
 Benjamini, Y., and Hochberg, Y. Controlling the false discovery
 rate: a practical and powerful approach to multiple testing. \emph{Journal

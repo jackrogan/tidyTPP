@@ -1,5 +1,58 @@
+#' Get p-value by comparison of modelled melting point differences
+#'
+#' @description
+#'  Calculate p-value from melting-point differences as described by Savitsky
+#'  \emph{et al.} 2014:
+#'  * Melting point differences (\eqn{\Delta T_m}) are found and filtered to
+#'    those for which \eqn{R^2 > 0.8} for all observations and
+#'    \eqn{plateau < 0.3} for all control curves.
+#'  * Proteins are ordered by steepness of melting curve slope - steepest first.
+#'  * These proteins are then divided into bins of 300, and the final group
+#'    added to the second-to-last if less than 300.
+#'  * Per bin, the left- and right-sided robust standard deviation is estimated
+#'    using the 15.87, 50, and 84.13 percentiles and calculating p-values for
+#'    all measurements binwise.
+#'  * The p-values thus calculated are adjusted by applying the
+#'    Benjamini-Hochberg procedure to control the false discovery rate
+#'    (\emph{FDR}).
+#'
+#' @param fit_tbl A data frame (or `tibble`) of parameters from fitting melting
+#'  curves to each protein and taking melting point differences. This must
+#'  include the columns:
+#'  * `Protein_ID` - Unique protein identifier
+#'  * `Condition` - Experimental conditio \emph{e.g.} "Control", "Treatment"
+#'  * `min_R_sq` - Minimum coefficient of determination (\eqn{R^2}) for all
+#'    observations of a protein
+#'  * `max_control_plateau` - Maximum plateau parameter (\eqn{pl}) across all
+#'    control curves for a protein
+#'  * `diff_melt_point` - The difference in melting point (\eqn{\Delta T_m})
+#'    between two observations of a protein, \emph{e.g.} between a treated
+#'    and control sample
+#'  * `min_slope` - the slope (\eqn{f'(T_{infl})}) of the steepest curve per
+#'    comparison
+#'
+#' @return A `tibble` containing all data in fit_tbl, with additional calculated
+#'  column for FDR-adjusted p-value (`adj_pvalue`)
+#'
+#' @references
+#'  Savitski M. M. \emph{et al.} Tracking cancer drugs in living cells by
+#'  thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+#'
+#'  Benjamini, Y., and Hochberg, Y. Controlling the false discovery
+#'  rate: a practical and powerful approach to multiple testing. \emph{Journal
+#'  of the Royal Statistical Society Series B}, 57, 289–300 (1995)
+#'
+#' @export
+#'
+#' @examples
+#' # Minimal data - ATIC metling curve statistics
+#' x <- MP_stat_data_ATIC
+#'
+#' # Melting point p-value generation
+#' get_pval_by_melting_point(x)
+#'
 get_pval_by_melting_point <- function(fit_tbl){
-  # Get p-values (from Tm as in Savitsky 2014) - using means of replicates
+  # Get p-values (from Tm as in Savitsky 2014)
   # 1. Filter to min R2 > 0.8, max vehicle plateau < 0.3
   pval_tbl <-
     fit_tbl[fit_tbl$min_R_sq > 0.8 & fit_tbl$max_control_plateau < 0.3,]
@@ -26,7 +79,10 @@ get_pval_by_melting_point <- function(fit_tbl){
   # 5. Adjust with benjamini-hochberg over full sample set.
   pval_tbl$adj_pvalue <- stats::p.adjust(pval_tbl$pvalue, "BH")
 
-  pval_tbl <- pval_tbl[c("Protein_ID", "Condition", "Replicate", "adj_pvalue")]
+  cols_to_keep <-
+    names(pval_tbl) %in% c("Protein_ID", "Condition", "Replicate", "adj_pvalue")
+  pval_tbl <-
+    pval_tbl[cols_to_keep]
 
   # Merge tables
   fit_tbl <- merge(fit_tbl, pval_tbl, all.x = TRUE)

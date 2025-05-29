@@ -1,13 +1,66 @@
+#' Get p-value by nonparametric analysis of response curves \emph{(NPARC)}
+#'
+#' @description
+#'  Calculate F-Score and p-value with nonparametric analysis of response curves
+#'  \emph{(NPARC)} as described by Childs \emph{et al.} 2019:
+#'  * For each protein and condition comparison, assume a null hypothesis
+#'    \eqn{H_{null}} (measurements from both conditions can be modelled with the
+#'    same sigmoidal melting curve) and alternate hypothesis \eqn{H_{alt}}
+#'    (measurements each condition can be modelled with separate sigmoidal
+#'    melting curve.)
+#'  * Curves are fitted to each hypothesis for each protein, and the degrees
+#'    of freedom estimated for each curve fit.
+#'  * The F-statistic and p-value is computed using the residual sum of squares
+#'    \emph{RSS} from \eqn{H_{alt}} and \eqn{H_{null}} calculated degrees
+#'    of freedom for for each protein and condition comparison.
+#'  * p-values are adjusted by applying the
+#'    Benjamini-Hochberg procedure to control the false discovery rate
+#'    (\emph{FDR}).
+#'
+#' @inheritParams analyse_TPP
+#' @param degrees_of_freedom Numeric. Range of degrees of freedom to use to
+#'  generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.
+#'
+#' @return A `tibble`, with the columns `Protein_ID`, `Condition`, `F-scaled`,
+#'  and `p_adj_NPARC`
+#'
+#' @references
+#'  Childs, D., \emph{et al.} Non-Parametric Analysis of Thermal Proteome
+#'  Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
+#'  Proteomics}, 18, 2506-2515, (2019)
+#'
+#'  Benjamini, Y., and Hochberg, Y. Controlling the false discovery
+#'  rate: a practical and powerful approach to multiple testing. \emph{Journal
+#'  of the Royal Statistical Society Series B}, 57, 289–300 (1995)
+#'
+#' @export
+#'
+#' @examples
+#' # Minimal data - two-protein melt curve
+#' x <- quan_data_normP
+#' norm_x <- normalise_TPP(x)
+#'
+#' # NPARC F-score and p-value generation
+#' get_NPARC_pval(norm_x,
+#'                quantity_column = "rel_quantity",
+#'                max_cores = 1)
+#'
+#' # Plot F-score and p-value distribution
+#' get_NPARC_pval(norm_x,
+#'                quantity_column = "rel_quantity",
+#'                max_cores = 1,
+#'                to_plot = TRUE)
 get_NPARC_pval <- function(TPP_tbl,
-                           degrees_of_freedom = 4:7,
-                           max_cores = 1,
+                           degrees_of_freedom = c(4:7),
+                           max_cores = 4,
                            comparisons = NULL,
+                           quantity_column = "quantity",
                            control_name = "Control",
-                           to_plot = TRUE,
+                           to_plot = FALSE,
                            to_save = NULL,
-                           silent = FALSE,
-                           ...){
+                           silent = FALSE){
 
+  TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
   # Check and make sure comparisons are given
   if(is.null(comparisons)){
     conds <- unique(TPP_tbl$Condition)
@@ -24,7 +77,7 @@ get_NPARC_pval <- function(TPP_tbl,
     condition_subset <-
       c(comparisons[[k, "Condition_01"]], comparisons[[k, "Condition_02"]])
     if(!silent) {
-      cat("NPARC F-score calculation - ", condition_subset[1], " vs ",
+      cat("\nNPARC F-score calculation - ", condition_subset[1], " vs ",
           condition_subset[2], ":\n", sep = "")
     }
     NPARC_tbl_k <- TPP_tbl[TPP_tbl$Condition %in% condition_subset,]
@@ -38,13 +91,12 @@ get_NPARC_pval <- function(TPP_tbl,
       if(max_cores > 1){
         n_cores <-
           min(parallel::detectCores(), max_cores, length(degrees_of_freedom))
-        cat("Cores:", n_cores, "\nEstimated process time: ",
-            round(
-              0.21*n_cores +
-                (nrow(TPP_tbl)*length(degrees_of_freedom)*0.000113) / n_cores,
-              2),
-            "s\n")
-
+        if(!silent){
+          est_core_time <- nrow(TPP_tbl) * length(degrees_of_freedom) * 0.000113
+          est_time <- 0.21 * n_cores + est_core_time / n_cores
+          cat("Cores:", n_cores,
+              "\nEstimated process time: ", round(est_time, 2), "s\n")
+        }
         cl <- parallel::makeCluster(n_cores)
         parallel::clusterExport(cl, list(
           "get_spline_model_details",
@@ -57,30 +109,32 @@ get_NPARC_pval <- function(TPP_tbl,
           parallel::parLapply(cl,
                               1:length(degrees_of_freedom),
                               fit_hypothesis_splines,
-                              x_tbl = TPP_tbl,
-                              d_f_total = degrees_of_freedom) |>
+                              x_tbl = NPARC_tbl_k,
+                              d_f_total = degrees_of_freedom,
+                              silent = silent) |>
           Reduce(rbind, x = _)
 
         parallel::stopCluster(cl)
 
         # Serially:
       } else {
-        # Time taken should be 0.00043 s / Protein row
-        cat("Estimated process time: ",
-            round(nrow(TPP_tbl) * length(degrees_of_freedom) * 0.000108 , 2),
-            "s\n")
-
+        if(!silent){
+          # Time taken should be 0.00043 s / Protein row
+          est_time <- nrow(TPP_tbl) * length(degrees_of_freedom) * 0.000108
+          cat("Estimated process time: ", round(est_time , 2), "s\n")
+        }
         all_df_splines <-
           lapply(1:length(degrees_of_freedom),
                  fit_hypothesis_splines,
-                 x = TPP_tbl,
-                 d_f_total = degrees_of_freedom) |>
+                 x = NPARC_tbl_k,
+                 d_f_total = degrees_of_freedom,
+                 silent = silent) |>
           Reduce(rbind, x = _)
       }
       time_out <- proc.time() - time_total
       if(!silent) cat("Elapsed time:", time_out[["elapsed"]], "s\n")
 
-      if(any(all_df_splines$success)){
+      if(any(all_df_splines$success & all_df_splines$hypothesis == "H-alt")){
 
         # Select degrees of freedom that minimise AICc for each protein
         # break ties with minimum complexity
@@ -181,19 +235,22 @@ get_NPARC_pval <- function(TPP_tbl,
 
       } else {
         if(!silent) {
-          cat("No curves successfully fitted:",
+          cat("No alternate hypothesis curves successfully fitted:",
               "Try more appropriate degrees of freedom.\n")
+          NPARC_tbl_k <- NULL
         }
       }
     } else {
       if(!silent) {
         cat("Cannot calculate NPARC scores: degrees of freedom not numeric.\n")
+        NPARC_tbl_k <- NULL
       }
     }
 
-    NPARC_tbl <- c(NPARC_tbl, NPARC_tbl_k)
+    NPARC_tbl <- rbind(NPARC_tbl, NPARC_tbl_k)
   }
 
+  NPARC <- mask_column(NPARC_tbl, "quantity", quantity_column)
   tibble::as_tibble(NPARC_tbl)
 }
 

@@ -4,20 +4,9 @@
 #' `analyse_TPP()` transforms \emph{Thermal Protein Profiling} (TPP) relative
 #'  intensity data, fitting sigmoidal melting curves to the presumably
 #'  normalised data, generating curve parameters - including melting points,
-#'  then calculating statistical parameters including p-value as described by
-#'  Savitsky \emph{et al.} 2014:
-#'  * Melting point differences (\eqn{\Delta T_m}) are found and filtered to
-#'    those for which \eqn{R^2 > 0.8} for all observations and
-#'    \eqn{plateau < 0.3} for all control curves.
-#'  * Proteins are ordered by steepness of melting curve slope - steepest first.
-#'  * These proteins are then divided into bins of 300, and the final group
-#'    added to the second-to-last if less than 300.
-#'  * Per bin, the left- and right-sided robust standard deviation is estimated
-#'    using the 15.87, 50, and 84.13 percentiles and calculating p-values for
-#'    all measurements binwise.
-#'  * The p-values thus calculated are adjusted by applying the
-#'    Benjamini-Hochberg procedure to control the false discovery rate
-#'    (\emph{FDR}).
+#'  then calculating statistical parameters - optionally including melting-point
+#'  difference-based p-value as described by Savitsky \emph{et al.} 2014, and
+#'  NPARC F-score and p-value as described by Childs \emph{et al.} 2019.
 #
 #' @inheritParams normalise_TPP
 #' @param comparisons A data.frame containing the information needed to build
@@ -36,6 +25,45 @@
 #'
 #' @param control_name Character. Character string that matches the control
 #'  experiment in `TPP_tbl$Condition`
+#' @param p_value_methods Character. Vector of names of statistical significance
+#'  approaches to use.
+#'
+#'  Include "melting_point" to calculate p-value from melting-point differences
+#'  as described by Savitsky \emph{et al.} 2014:
+#'  * Melting point differences (\eqn{\Delta T_m}) are found and filtered to
+#'    those for which \eqn{R^2 > 0.8} for all observations and
+#'    \eqn{plateau < 0.3} for all control curves.
+#'  * Proteins are ordered by steepness of melting curve slope - steepest first.
+#'  * These proteins are then divided into bins of 300, and the final group
+#'    added to the second-to-last if less than 300.
+#'  * Per bin, the left- and right-sided robust standard deviation is estimated
+#'    using the 15.87, 50, and 84.13 percentiles and calculating p-values for
+#'    all measurements binwise.
+#'  * The p-values thus calculated are adjusted by applying the
+#'    Benjamini-Hochberg procedure to control the false discovery rate
+#'    (\emph{FDR}).
+#'
+#'  Include "NPARC" to calculate F-Score and p-value with nonparametric
+#'  analysis of response curves \emph{(NPARC)} as described by Childs
+#'  \emph{et al.} 2019:
+#'  * For each protein and condition comparison, assume a null hypothesis
+#'    \eqn{H_{null}} (measurements from both conditions can be modelled with the
+#'    same sigmoidal melting curve) and alternate hypothesis \eqn{H_{alt}}
+#'    (measurements each condition can be modelled with separate sigmoidal
+#'    melting curve.)
+#'  * Curves are fitted to each hypothesis for each protein, and the degrees
+#'    of freedom estimated for each curve fit.
+#'  * The F-statistic and p-value is computed using the residual sum of squares
+#'    \emph{RSS} from \eqn{H_{alt}} and \eqn{H_{null}} calculated degrees
+#'    of freedom for for each protein and condition comparison.
+#'  * p-values are adjusted by applying the
+#'    Benjamini-Hochberg procedure to control the false discovery rate
+#'    (\emph{FDR}).
+#'
+#' @param to_plot Boolean. If true, will generate distribution plots of
+#'  F-statistic and p-value on calculating \emph{NPARC} statistics
+#' @param to_save Character. If supplied, will generate distribution plots of
+#'  F-statistic and p-value and save with [ggsave()]
 #' @param ... Further arguments to be passed to [fit_melt_by_experiment()] and
 #' [nls_multstart()]
 #'
@@ -43,8 +71,12 @@
 #'  columns (where possible) detaling curve parameters and comparison statistics
 #'
 #' @references
-#'  Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
+#'  Savitski M. M. \emph{et al.} Tracking cancer drugs in living cells by
 #'  thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+#'
+#'  Childs, D., \emph{et al.} Non-Parametric Analysis of Thermal Proteome
+#'  Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
+#'  Proteomics}, 18, 2506-2515, (2019)
 #'
 #'  Benjamini, Y., and Hochberg, Y. Controlling the false discovery
 #'  rate: a practical and powerful approach to multiple testing. \emph{Journal
@@ -60,11 +92,17 @@
 #' # Analyse - single core curve fitting
 #' analyse_TPP(norm_x, max_cores = 1)
 #'
+#' # Analyse - melting-point p-value only
+#' analyse_TPP(norm_x, max_cores = 1, p_value_methods = "melting_point")
+#'
+#' # Analyse - NPARC p-value only and plot F-Score, p-value distributions
+#' analyse_TPP(norm_x, max_cores = 1, p_value_methods = "NPARC", to_plot = TRUE)
+#'
 #' # Custom comparisons, e.g. compare treated replicates
 #' comparison_tbl <-  data.frame(
 #'   Condition_01 = c("Treated", "Treated", "Treated"),
 #'   Replicate_01 = c("01", "02", "01"),
-#'   Condition_02 = c("Control", "Control","Treated") ,
+#'   Condition_02 = c("Control", "Control", "Treated") ,
 #'   Replicate_02 = c("01", "02", "02")
 #' )
 #'
@@ -78,7 +116,10 @@ analyse_TPP <-
            comparisons = NULL,
            quantity_column = "rel_quantity",
            control_name = "Control",
+           p_value_methods = c("melting_point", "NPARC"),
            silent = FALSE,
+           to_plot = FALSE,
+           to_save = NULL,
            ...){
 
   TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
@@ -116,7 +157,7 @@ analyse_TPP <-
   # Add control-vs-control
   if(length(reps) > 1){
     controls <- create_control_comparison_tbl(reps, control_name)
-    comparisons <- rbind(comparisons, controls)
+    controlled_comparisons <- rbind(comparisons, controls)
 
     if(!silent){
       cat("\nControl-vs-control:\n")
@@ -132,7 +173,7 @@ analyse_TPP <-
   if(!silent) cat("\nCalculate per-curve statistics...\n")
   fit_tbl <-
     split(fit_tbl, fit_tbl$Protein_ID) |>
-    lapply(find_melting_point_diffs, comparisons) |>
+    lapply(find_melting_point_diffs, controlled_comparisons) |>
     Reduce(rbind, x = _)
 
   # Get statistics per protein: min R2, max vehicle plateau, min slope
@@ -147,9 +188,23 @@ analyse_TPP <-
   fit_tbl <- merge(fit_tbl, control_max_tbl)
 
   if(!silent) cat("Calculate p-values...\n")
-
   # Get P values (from Tm as in Savitsky 2014)
-  fit_tbl <- get_pval_by_melting_point(fit_tbl)
+  if("melting_point" %in% p_value_methods) {
+    fit_tbl <- get_pval_by_melting_point(fit_tbl)
+  }
+
+  # Get NPARC p-values (as in Childs 2019)
+  if("NPARC" %in% p_value_methods){
+    NPARC_tbl <-
+      get_NPARC_pval(TPP_tbl,
+                    comparisons = comparisons,
+                    control_name = control_name,
+                    to_plot = to_plot,
+                    to_save = to_save,
+                    silent = silent)
+
+    fit_tbl <- merge(NPARC_tbl, fit_tbl, all = TRUE)
+  }
 
   # Merge tibbles for ease of passing through workflow
   TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
