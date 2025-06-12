@@ -266,7 +266,7 @@ import_custom_format <- function(datafile,
   # Transform Experiment column
   if(!is.null(experiment_id_func)){
     if(!silent) cat("Transforming experiment names...\n")
-    TPP_tbl$Experiment <- experiment_id_func(TPP_tbl$Experiment)
+    TPP_tbl$Experiment <- as.numeric(experiment_id_func(TPP_tbl$Experiment))
   }
 
   # Match to Experiment values

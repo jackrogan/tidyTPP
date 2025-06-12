@@ -7,8 +7,7 @@
 get_TPP_hits(
   TPP_data,
   n_hits = NULL,
-  hit_criteria = list(pvalue_min_threshold = 0.05, pvalue_max_threshold = 0.1,
-    DTm_same_sign = TRUE, DTm_gt_Dcontrol = TRUE, slope_threshold = -0.06),
+  hit_criteria = "default_hit_criteria",
   control_name = "Control",
   to_export = "TPP_hits.xlsx",
   to_plot = FALSE,
@@ -30,13 +29,23 @@ compared for each \eqn{\Delta T_m} comparison) is necessary for the
 summary or exported. Hits are ranked by ascending adjusted p-value, and the
 top \code{n_hits} kept.}
 
-\item{hit_criteria}{List of criteria for selecting hits. Default criteria:\tabular{rr}{
-    \tab  \cr
-   pvalue_min_threshold \tab 0.05 \cr
-   pvalue_max_threshold \tab 0.10 \cr
-   DTm_same_sign \tab TRUE \cr
-   DTm_gt_Dcontrol \tab TRUE \cr
-   slope_threshold \tab -0.6 \cr
+\item{hit_criteria}{List of criteria for selecting hits.
+
+Default criteria (if \code{p_adj_NPARC} column is present):\tabular{lrr}{
+    \tab  \tab  \cr
+    \tab NPARC_pvalue_threshold \tab 0.05 \cr
+    \tab DTm_same_sign \tab TRUE \cr
+    \tab DTm_gt_Dcontrol \tab TRUE \cr
+}
+
+
+Otherwise:\tabular{lrr}{
+    \tab  \tab  \cr
+    \tab pvalue_min_threshold \tab 0.05 \cr
+    \tab pvalue_max_threshold \tab 0.10 \cr
+    \tab DTm_same_sign \tab TRUE \cr
+    \tab DTm_gt_Dcontrol \tab TRUE \cr
+    \tab slope_threshold \tab -0.6 \cr
 }
 
 \itemize{
@@ -44,6 +53,8 @@ top \code{n_hits} kept.}
 p-value must meet per protein
 \item \emph{pvalue_max_threshold:} Threshold \emph{every} adjusted p-value must
 meet per protein
+\item \emph{NPARC_pvalue_threshold:} Threshold every NPARC-derived p-value must
+meet - one pvalue should be generated per protein and condition.
 \item \emph{DTm_same_sign:} \eqn{\Delta T_m} must have the same sign
 \item \emph{DTm_gt_Dcontrol:} \eqn{\Delta T_m} must be
 \eqn{> \Delta T_m (controls)}
@@ -79,7 +90,21 @@ combination.
 \description{
 \code{get_TPP_hits()} filters TPP-TR result data to candidates for thermally
 stabilised or destabilised proteins, and returns a per-protein summary of
-results. Default hit criteria areas described by Savitsky et al. 2014:
+results. Default hit criteria are adapted from those described by Savitsky
+et al. 2014 to include the use of \emph{NPARC} p-values - \emph{per} Childs
+et al. 2019 - and allow curves that satisfy the non-parametric statistical
+tests but don't fit the steep slope pattern required by Savitsky:
+\itemize{
+\item The FDR-adjusted p-value derived from nonparametric analysis of response
+curves \emph{(NPARC)} is less than 0.05
+\item All replicates show a positive \eqn{\Delta T_m} or all negative.
+\item All \eqn{\Delta T_m} values compared against controls are greater than the
+maximum \eqn{\Delta T_m} between controls.
+\item No slope threshold is used.
+}
+
+Original criteria (that is used if no \emph{NPARC}-derived p-value is
+avaiable):
 \itemize{
 \item The melting point difference (\eqn{\Delta T_m}) compared against control
 for a protein has a minimum  \emph{FDR}-adjusted p-value of less than 0.05
@@ -118,4 +143,8 @@ unlink(hit_results_file)
 \references{
 Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
 thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+
+Childs, D., \emph{et al.} Non-Parametric Analysis of Thermal Proteome
+Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
+Proteomics}, 18, 2506-2515, (2019)
 }

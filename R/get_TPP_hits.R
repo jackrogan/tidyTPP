@@ -3,7 +3,21 @@
 #' @description
 #' `get_TPP_hits()` filters TPP-TR result data to candidates for thermally
 #'  stabilised or destabilised proteins, and returns a per-protein summary of
-#'  results. Default hit criteria areas described by Savitsky et al. 2014:
+#'  results. Default hit criteria are adapted from those described by Savitsky
+#'  et al. 2014 to include the use of \emph{NPARC} p-values - \emph{per} Childs
+#'  et al. 2019 - and allow curves that satisfy the non-parametric statistical
+#'  tests but don't fit the steep slope pattern required by Savitsky:
+#'
+#'  * The FDR-adjusted p-value derived from nonparametric analysis of response
+#'    curves \emph{(NPARC)} is less than 0.05
+#'  * All replicates show a positive \eqn{\Delta T_m} or all negative.
+#'  * All \eqn{\Delta T_m} values compared against controls are greater than the
+#'    maximum \eqn{\Delta T_m} between controls.
+#'  * No slope threshold is used.
+#'
+#'  Original criteria (that is used if no \emph{NPARC}-derived p-value is
+#'  avaiable):
+#'
 #'  * The melting point difference (\eqn{\Delta T_m}) compared against control
 #'    for a protein has a minimum  \emph{FDR}-adjusted p-value of less than 0.05
 #'    and a maximum of less than 0.10 across biological replicates.
@@ -26,20 +40,32 @@
 #' @param n_hits Optional integer. Maximum number of hits to be retained in
 #'  summary or exported. Hits are ranked by ascending adjusted p-value, and the
 #'  top `n_hits` kept.
-#' @param hit_criteria List of criteria for selecting hits. Default criteria:
+#' @param hit_criteria List of criteria for selecting hits.
 #'
-#'  |                     |        |
-#'  | --------------------:| -----:|
-#'  | pvalue_min_threshold | 0.05  |
-#'  | pvalue_max_threshold | 0.10  |
-#'  | DTm_same_sign        | TRUE  |
-#'  | DTm_gt_Dcontrol      | TRUE  |
-#'  | slope_threshold      | -0.6  |
+#' Default criteria (if `p_adj_NPARC` column is present):
+#'
+#' |   |                       |        |
+#' | - | ----------------------:| -----:|
+#' |   | NPARC_pvalue_threshold | 0.05  |
+#' |   | DTm_same_sign          | TRUE  |
+#' |   | DTm_gt_Dcontrol        | TRUE  |
+#'
+#' Otherwise:
+#'
+#' |   |                      |       |
+#' | - | --------------------:| -----:|
+#' |   | pvalue_min_threshold | 0.05  |
+#' |   | pvalue_max_threshold | 0.10  |
+#' |   | DTm_same_sign        | TRUE  |
+#' |   | DTm_gt_Dcontrol      | TRUE  |
+#' |   | slope_threshold      | -0.6  |
 #'
 #'  * \emph{pvalue_min_threshold:} Threshold \emph{at least one} adjusted
 #'    p-value must meet per protein
 #'  * \emph{pvalue_max_threshold:} Threshold \emph{every} adjusted p-value must
 #'    meet per protein
+#'  * \emph{NPARC_pvalue_threshold:} Threshold every NPARC-derived p-value must
+#'    meet - one pvalue should be generated per protein and condition.
 #'  * \emph{DTm_same_sign:} \eqn{\Delta T_m} must have the same sign
 #'  * \emph{DTm_gt_Dcontrol:} \eqn{\Delta T_m} must be
 #'    \eqn{> \Delta T_m (controls)}
@@ -64,6 +90,10 @@
 #' @references
 #'  Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
 #'  thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
+#'
+#'  Childs, D., \emph{et al.} Non-Parametric Analysis of Thermal Proteome
+#'  Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
+#'  Proteomics}, 18, 2506-2515, (2019)
 #'
 #' @export
 #'
@@ -90,13 +120,7 @@
 get_TPP_hits <- function(
     TPP_data,
     n_hits = NULL,
-    hit_criteria = list(
-      pvalue_min_threshold = 0.05,
-      pvalue_max_threshold = 0.1,
-      DTm_same_sign = TRUE,
-      DTm_gt_Dcontrol = TRUE,
-      slope_threshold = -0.06
-    ),
+    hit_criteria = "default_hit_criteria",
     control_name = "Control",
     to_export = "TPP_hits.xlsx",
     to_plot = FALSE,
@@ -107,6 +131,27 @@ get_TPP_hits <- function(
 ){
   TPP_hits <- TPP_data
   if(!"Replicate" %in% colnames(TPP_hits)) TPP_hits$Replicate <- "01"
+
+  if(inherits(hit_criteria, "character") &
+     "default_hit_criteria" %in% hit_criteria){
+    if("p_adj_NPARC" %in% colnames(TPP_hits)){
+      hit_criteria <-
+        list(
+          NPARC_pvalue_threshold = 0.05,
+          DTm_same_sign = TRUE,
+          DTm_gt_Dcontrol = TRUE
+        )
+    } else {
+      hit_criteria <-
+        list(
+          pvalue_min_threshold = 0.05,
+          pvalue_max_threshold = 0.1,
+          DTm_same_sign = TRUE,
+          DTm_gt_Dcontrol = TRUE,
+          slope_threshold = -0.06
+        )
+    }
+  }
 
   if(!silent){
     cat("--------------------\n")
@@ -125,8 +170,9 @@ get_TPP_hits <- function(
                c("Protein_ID", "Condition", "Replicate", "Comparison", "a", "b",
                  "plateau", "melt_point", "infl_point", "slope", "R_sq",
                  "diff_melt_point", "min_comparison_slope",
-                 "adj_pvalue")]
+                 "F_scaled", "p_adj_NPARC", "adj_pvalue")]
   TPP_hits <- unique(TPP_hits)
+
   # Move control delta-Tm to its own column.
   control_tbl <- TPP_hits[TPP_hits$Condition == control_name,]
 
@@ -141,7 +187,7 @@ get_TPP_hits <- function(
   TPP_hits <- merge(TPP_hits[TPP_hits$Condition != control_name,], control_tbl)
 
   starting_colnames <- colnames(TPP_hits)
-  stat_columns_present <- c("adj_pvalue", "diff_melt_point",
+  stat_columns_present <- c("p_adj_NPARC", "adj_pvalue", "diff_melt_point",
                             "min_comparison_slope")
   stat_columns_present <-
     stat_columns_present[which(stat_columns_present %in% colnames(TPP_hits))]
@@ -157,7 +203,7 @@ get_TPP_hits <- function(
 
   if(length(hit_criteria) > 0){
 
-    # Filter 1: pvalue threshold
+    # Filter 1: pvalue threshold (Melting point difference)
     if("pvalue_min_threshold" %in% names(hit_criteria)){
       TPP_hits <-
           TPP_hits[TPP_hits$min_adj_pvalue < hit_criteria$pvalue_min_threshold,]
@@ -166,6 +212,12 @@ get_TPP_hits <- function(
     if("pvalue_max_threshold" %in% names(hit_criteria)){
         TPP_hits <-
           TPP_hits[TPP_hits$max_adj_pvalue < hit_criteria$pvalue_max_threshold,]
+    }
+
+    # Filter 1a: pvalue threshold (NPARC)
+    if("NPARC_pvalue_threshold" %in% names(hit_criteria)){
+      TPP_hits <-
+        TPP_hits[TPP_hits$p_adj_NPARC < hit_criteria$NPARC_pvalue_threshold,]
     }
 
     # Filter 2: Both melting point differences have the same sign
@@ -204,22 +256,39 @@ get_TPP_hits <- function(
     TPP_hits$Comparison <-
       gsub("^(.*)_\\d+(_vs_.*)_\\d+$", "\\1\\2", TPP_hits$Comparison)
 
+    TPP_ID_cols <- c("Protein_ID", "Condition", "Comparison")
+    TPP_stat_cols <- c("F_scaled", "p_adj_NPARC", "max_adj_pvalue",
+                       "melt_point", "mean_control_melt_point",
+                       "diff_melt_point", "abs_diff_melt_control")
+    which_stat_cols <- TPP_stat_cols %in% colnames(TPP_hits)
+    TPP_hits <- TPP_hits[c(TPP_ID_cols, TPP_stat_cols[which_stat_cols])]
+
     TPP_hits <-
       stats::aggregate(
-        cbind(max_adj_pvalue, melt_point, mean_control_melt_point,
-              diff_melt_point, abs_diff_melt_control) ~
-          Protein_ID + Condition + Comparison,
+        . ~ Protein_ID + Condition + Comparison,
         TPP_hits,
         FUN = mean)
+
     colnames(TPP_hits) <-
-      c("Protein_ID", "Condition", "Comparison", "max_adj_pvalue", "mean_melt_point",
+      c("Protein_ID", "Condition", "Comparison", "F_scaled", "p_adj_NPARC",
+        "max_adj_pvalue", "mean_melt_point",
         "mean_control_melt_point", "mean_diff_melt_point",
-        "mean_control_diff_melt_point")
+        "mean_control_diff_melt_point")[c(TRUE, TRUE, TRUE, which_stat_cols)]
 
 
 
-    # Get top n hits in order of ascending pvalue
-    TPP_hits <- TPP_hits[order(TPP_hits$max_adj_pvalue),]
+    # Get top n hits in order of F-score
+    if("F_scaled" %in% colnames(TPP_hits)){
+      TPP_hits <- TPP_hits[order(TPP_hits$F_scaled, decreasing = TRUE),]
+    # Or melting-point p-value
+    } else if("max_adj_pvalue"%in% colnames(TPP_hits)) {
+      TPP_hits <- TPP_hits[order(TPP_hits$max_adj_pvalue),]
+    # Or melting point difference
+    } else {
+    TPP_hits <-
+      TPP_hits[order(TPP_hits$mean_diff_melt_point, decreasing = TRUE),]
+    }
+
     if(!is.null(n_hits)) TPP_hits <- utils::head(TPP_hits, n_hits)
 
     # Export data

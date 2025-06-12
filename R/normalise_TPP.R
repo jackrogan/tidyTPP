@@ -115,6 +115,7 @@ normalise_TPP <- function(TPP_tbl,
   # 2. Find jointP - proteins present in all conditions
   jointP_tbl_list <-
     split(TPP_tbl, TPP_tbl[c("Condition", "Replicate")])
+
   jointP <-
     Reduce(function(x, y) intersect(x, y$Protein_ID),
            jointP_tbl_list[2:length(jointP_tbl_list)],

@@ -244,28 +244,30 @@ create_control_comparison_tbl <- function(reps, control_name){
 find_melting_point_diffs <- function(fit_tbl, comparisons){
   comparison_tbl <-
     stats::reshape(comparisons, direction = "long", varying = c(1:4),
-            sep = "_", idvar = "comparison", timevar = "order") |>
+                   sep = "_", idvar = "comparison", timevar = "order") |>
     merge(fit_tbl[,c("Protein_ID", "Condition", "Replicate",
                      "melt_point", "slope")]) |>
     stats::reshape(direction = "wide", idvar = "comparison", timevar = "order",
-            v.names = c("Condition", "Replicate", "melt_point", "slope"))
+                   v.names = c("Condition", "Replicate", "melt_point", "slope"))
 
-  comparison_tbl$comparison <-
-    paste(comparison_tbl$Condition.1, comparison_tbl$Replicate.1, "vs",
-          comparison_tbl$Condition.2, comparison_tbl$Replicate.2, sep = "_")
-  comparison_tbl$diff_melt_point <-
-    comparison_tbl$melt_point.1 - comparison_tbl$melt_point.2
-  comparison_tbl$min_comparison_slope <-
-    pmin(comparison_tbl$slope.1, comparison_tbl$slope.2)
-
-  comparison_tbl <-
-    comparison_tbl[,c("Protein_ID", "Condition.1", "Replicate.1", "comparison",
-                      "diff_melt_point", "min_comparison_slope")]
-  colnames(comparison_tbl) <-
-    c("Protein_ID", "Condition", "Replicate", "Comparison",
-      "diff_melt_point", "min_comparison_slope")
-  comparison_tbl <- merge(fit_tbl, comparison_tbl, all.x = TRUE)
-
+  if("Condition.2" %in% colnames(comparison_tbl)){
+    comparison_tbl$comparison <-
+      paste(comparison_tbl$Condition.1, comparison_tbl$Replicate.1, "vs",
+            comparison_tbl$Condition.2, comparison_tbl$Replicate.2, sep = "_")
+    comparison_tbl$diff_melt_point <-
+      comparison_tbl$melt_point.1 - comparison_tbl$melt_point.2
+    comparison_tbl$min_comparison_slope <-
+      pmin(comparison_tbl$slope.1, comparison_tbl$slope.2)
+    comparison_tbl <-
+      comparison_tbl[,c("Protein_ID", "Condition.1", "Replicate.1", "comparison",
+                        "diff_melt_point", "min_comparison_slope")]
+    colnames(comparison_tbl) <-
+      c("Protein_ID", "Condition", "Replicate", "Comparison",
+        "diff_melt_point", "min_comparison_slope")
+    comparison_tbl <- merge(fit_tbl, comparison_tbl, all.x = TRUE)
+  } else {
+    comparison_tbl <- fit_tbl
+  }
   tibble::as_tibble(comparison_tbl)
 }
 
