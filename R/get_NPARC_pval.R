@@ -20,6 +20,10 @@
 #' @inheritParams analyse_TPP
 #' @param degrees_of_freedom Numeric. Range of degrees of freedom to use to
 #'  generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.
+#' @param max_cores Integer. The maximum number of cores to parallelise the
+#'  spline fitting over, if less than the maximum number of cores available.
+#'  If `max_cores` is 1, then spline fitting will be run serially in
+#'  a single process
 #'
 #' @return A `tibble`, with the columns `Protein_ID`, `Condition`, `F-scaled`,
 #'  and `p_adj_NPARC`

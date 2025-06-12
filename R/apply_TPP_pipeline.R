@@ -34,7 +34,7 @@ apply_TPP_pipeline <- function(datafile,
                                config,
                                path = NULL,
                                to_plot = FALSE,
-                               max_cores = 8){
+                               max_cores = 4){
 
   # (include "/" if not given)
   if(!is.null(path)){

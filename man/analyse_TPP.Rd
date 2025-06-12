@@ -147,8 +147,4 @@ thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)
 Childs, D., \emph{et al.} Non-Parametric Analysis of Thermal Proteome
 Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
 Proteomics}, 18, 2506-2515, (2019)
-
-Benjamini, Y., and Hochberg, Y. Controlling the false discovery
-rate: a practical and powerful approach to multiple testing. \emph{Journal
-of the Royal Statistical Society Series B}, 57, 289–300 (1995)
 }

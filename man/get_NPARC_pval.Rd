@@ -33,6 +33,11 @@ assumed.}
 \item{degrees_of_freedom}{Numeric. Range of degrees of freedom to use to
 generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.}
 
+\item{max_cores}{Integer. The maximum number of cores to parallelise the
+spline fitting over, if less than the maximum number of cores available.
+If \code{max_cores} is 1, then spline fitting will be run serially in
+a single process}
+
 \item{comparisons}{A data.frame containing the information needed to build
 the comparisons to use to calculate \eqn{\Delta T_m} and other statistics.
 Columns must be \emph{Condition_01}, \emph{Replicate_01},

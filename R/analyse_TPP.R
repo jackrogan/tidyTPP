@@ -78,10 +78,6 @@
 #'  Profiles Reveals Novel Drug-Binding Proteins. \emph{Molecular & Cellular
 #'  Proteomics}, 18, 2506-2515, (2019)
 #'
-#'  Benjamini, Y., and Hochberg, Y. Controlling the false discovery
-#'  rate: a practical and powerful approach to multiple testing. \emph{Journal
-#'  of the Royal Statistical Society Series B}, 57, 289–300 (1995)
-#'
 #' @export
 #'
 #' @examples
@@ -196,12 +192,14 @@ analyse_TPP <-
   # Get NPARC p-values (as in Childs 2019)
   if("NPARC" %in% p_value_methods){
     NPARC_tbl <-
-      get_NPARC_pval(TPP_tbl,
-                    comparisons = comparisons,
-                    control_name = control_name,
-                    to_plot = to_plot,
-                    to_save = to_save,
-                    silent = silent)
+      parse_pass_dots(get_NPARC_pval,
+                      add_args = list(TPP_tbl = TPP_tbl,
+                                      comparisons = comparisons,
+                                      control_name = control_name,
+                                      to_plot = to_plot,
+                                      to_save = to_save,
+                                      silent = silent),
+                      ...)
 
     fit_tbl <- merge(NPARC_tbl, fit_tbl, all = TRUE)
   }

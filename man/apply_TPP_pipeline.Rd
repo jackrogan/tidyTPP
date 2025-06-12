@@ -9,7 +9,7 @@ apply_TPP_pipeline(
   config,
   path = NULL,
   to_plot = FALSE,
-  max_cores = 8
+  max_cores = 4
 )
 }
 \arguments{
