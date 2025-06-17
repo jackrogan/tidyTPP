@@ -57,12 +57,12 @@ column, \emph{e.g.}
 }}
 
 \item{protein_id_col_name}{Character. The exact name of a column in the data
-from which a unique proteinn ID will be taken.}
+from which a unique protein ID will be taken.}
 
 \item{quantity_pattern}{Character. Regular expression that identifies protein
 quantity column(s)}
 
-\item{experiment_col_name}{Character. If \code{table_format = "wide"}, the exact
+\item{experiment_col_name}{Character. If \code{table_format = "long"}, the exact
 name of a column in the data from which experiment ID should be taken.}
 
 \item{quantity_col_name}{Character. If \code{table_format = "wide"}, the name of

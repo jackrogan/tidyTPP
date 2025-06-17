@@ -85,7 +85,7 @@ fit_melt_by_experiment <-
       params_x
     }
 
-    # Run fitting function (TODO in parallel?)
+    # Run fitting function
     total = length(data_sep)
     if(!silent) cat("\nFitting", total, "protein curves...\n")
     time_total <- proc.time()

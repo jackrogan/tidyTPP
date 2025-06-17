@@ -213,8 +213,8 @@ get_NPARC_pval <- function(TPP_tbl,
           p_plot_k <- build_p_hist_plot(NPARC_tbl_k, title_k)
 
           if(to_plot) {
-            suppressWarnings(plot(f_plot_k))
-            suppressWarnings(plot(p_plot_k))
+            suppressWarnings(suppressMessages(plot(f_plot_k)))
+            suppressWarnings(suppressMessages(plot(p_plot_k)))
           }
           if(!is.null(to_save)) {
             save_k <-
@@ -222,13 +222,15 @@ get_NPARC_pval <- function(TPP_tbl,
                   paste0("\\1_", condition_subset[1],
                          "_", condition_subset[2], "_F_score\\2"),
                   to_save)
-            suppressWarnings(ggplot2::ggsave(save_k, f_plot_k))
+            suppressWarnings(
+              suppressMessages(ggplot2::ggsave(save_k, f_plot_k)))
             save_k <-
               sub("(.*)(\\.[^\\.]+)$",
                   paste0("\\1_", condition_subset[1],
                          "_", condition_subset[2], "_p_value\\2"),
                   to_save)
-            suppressWarnings(ggplot2::ggsave(save_k, p_plot_k))
+            suppressWarnings(suppressMessages(
+              ggplot2::ggsave(save_k, p_plot_k)))
           }
         }
 

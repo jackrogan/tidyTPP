@@ -10,6 +10,9 @@ A data frame with 4 rows and 16 variables:
 \item{Protein_ID}{Gene name identifying the protein}
 \item{Condition}{Treatment given to this sample set}
 \item{Replicate}{Replicate number for this sample set}
+\item{F_scaled}{Scaled F-statistic from NPARC analysis}
+\item{p_adj_NPARC}{p-value from NPARC analysis, FDR adjusted using
+\emph{Benjamini-Hochberg} correction}
 \item{\code{a}}{Parameter \code{a} from sigmoidal curve fitting}
 \item{\code{b}}{Parameter \code{b} from sigmoidal curve fitting}
 \item{melt_point}{Melting point, calculated as the model temperature

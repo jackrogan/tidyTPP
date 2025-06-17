@@ -43,6 +43,9 @@ MP_data_ATIC <-
 #'   \item{Protein_ID}{Gene name identifying the protein}
 #'   \item{Condition}{Treatment given to this sample set}
 #'   \item{Replicate}{Replicate number for this sample set}
+#'   \item{F_scaled}{Scaled F-statistic from NPARC analysis}
+#'   \item{p_adj_NPARC}{p-value from NPARC analysis, FDR adjusted using
+#'    \emph{Benjamini-Hochberg} correction}
 #'   \item{`a`}{Parameter `a` from sigmoidal curve fitting}
 #'   \item{`b`}{Parameter `b` from sigmoidal curve fitting}
 #'   \item{melt_point}{Melting point, calculated as the model temperature
@@ -63,6 +66,8 @@ MP_data_ATIC <-
 #'
 MP_stat_data_ATIC <-
   cbind(MP_data_ATIC, data.frame(
+    "F_scaled" = c(NA, NA, 8.78931, 8.78931),
+    "p_adj_NPARC" = c(NA, NA, 3.191767e-05, 3.191767e-05),
     "Comparison" =
       c("Control_01_vs_Control_01", NA,
         "Treated_01_vs_Control_01", "Treated_02_vs_Control_02"),
@@ -72,6 +77,13 @@ MP_stat_data_ATIC <-
     "max_control_plateau" = rep(0, 4),
     "adj_pvalue" = c(NA, NA, 0.142924515, 0.142924515)
   ))
+MP_stat_data_ATIC <-
+  MP_stat_data_ATIC[c("Protein_ID", "Condition", "Replicate", "F_scaled",
+                      "p_adj_NPARC", "a", "b", "melt_point", "infl_point",
+                      "slope", "plateau", "R_sq", "Comparison",
+                      "diff_melt_point", "min_R_sq", "min_slope",
+                      "max_control_plateau","adj_pvalue")]
+
 #' Quantity data for ATIC Protein Melting Curve
 #'
 #' A dataset containing raw proteomics data (DIA) for the protein ATIC:

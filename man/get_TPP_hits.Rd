@@ -45,7 +45,7 @@ Otherwise:\tabular{lrr}{
     \tab pvalue_max_threshold \tab 0.10 \cr
     \tab DTm_same_sign \tab TRUE \cr
     \tab DTm_gt_Dcontrol \tab TRUE \cr
-    \tab slope_threshold \tab -0.6 \cr
+    \tab slope_threshold \tab -0.06 \cr
 }
 
 \itemize{

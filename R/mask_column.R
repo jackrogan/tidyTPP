@@ -1,5 +1,5 @@
 # Function to mask column names
-mask_column <- function(x, old_name, new_name, unmask = FALSE){
+mask_column <- function(x, old_name, new_name){
   if(old_name != new_name){
 
     # Temporary name if mask already exists

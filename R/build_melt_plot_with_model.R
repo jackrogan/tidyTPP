@@ -101,7 +101,7 @@ build_melt_plot_with_model <-
     ggplot2::geom_line(data = predicted_data)
 
   # Add rules on plot for melting points if required (default yes)
-  if(rules){
+  if(rules & "melt_point" %in% colnames(predicted_data)){
     melt_plot <-
       melt_plot +
       ggplot2::geom_segment(data = predicted_data,

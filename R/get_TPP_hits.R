@@ -58,7 +58,7 @@
 #' |   | pvalue_max_threshold | 0.10  |
 #' |   | DTm_same_sign        | TRUE  |
 #' |   | DTm_gt_Dcontrol      | TRUE  |
-#' |   | slope_threshold      | -0.6  |
+#' |   | slope_threshold      | -0.06  |
 #'
 #'  * \emph{pvalue_min_threshold:} Threshold \emph{at least one} adjusted
 #'    p-value must meet per protein
@@ -182,6 +182,7 @@ get_TPP_hits <- function(
                      control_tbl,
                      FUN = \(x) mean(abs(x), na.rm = TRUE),
                      na.action = stats::na.pass)
+
   colnames(control_tbl)[2] <- "mean_control_melt_point"
   colnames(control_tbl)[3] <- "abs_diff_melt_control"
   TPP_hits <- merge(TPP_hits[TPP_hits$Condition != control_name,], control_tbl)

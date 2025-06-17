@@ -56,8 +56,8 @@
 #' @param quantity_pattern Character. Regular expression that identifies protein
 #'  quantity column(s)
 #' @param protein_id_col_name Character. The exact name of a column in the data
-#' from which a unique proteinn ID will be taken.
-#' @param experiment_col_name Character. If `table_format = "wide"`, the exact
+#' from which a unique protein ID will be taken.
+#' @param experiment_col_name Character. If `table_format = "long"`, the exact
 #'  name of a column in the data from which experiment ID should be taken.
 #' @param quantity_col_name Character. If `table_format = "wide"`, the name of
 #'  a column in the data from which protein quantity values should be taken.
@@ -140,7 +140,7 @@ import_custom_format <- function(datafile,
                                  ...){
 
   if(!silent){
-    cat("--------------------\n")
+    cat("\n--------------------\n")
     cat("TPP Data Import\n")
     cat("--------------------\n")
     cat("Read in:\n")

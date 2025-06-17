@@ -68,13 +68,14 @@ plot_melt <- function(data,
                                  "a", "b", "plateau",
                                  "melt_point",
                                  "R_sq")]
+    if(ncol(fit_parameters) < 4) fit_parameters <- NULL
   }
 
-  if(ncol(fit_parameters) > 3){
-    model_data <-
-      parse_pass_dots(predict_melt_curve,
-                      list("fit_parameters" = fit_parameters),
-                      ...)
+  model_data <-
+    parse_pass_dots(predict_melt_curve,
+                    list("fit_parameters" = fit_parameters),
+                    ...)
+  if(!is.null(model_data)) {
     melting_plot <-
       parse_pass_dots(build_melt_plot_with_model,
                       list("data" = data, "predicted_data" = model_data),

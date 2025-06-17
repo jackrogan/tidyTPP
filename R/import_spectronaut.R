@@ -30,12 +30,12 @@ import_spectronaut <- function(datafile,
 
   # Regex function to extract experiment ID:
   # digits following "Sample_"
-  experiment_id_func = \(x) gsub(".*Sample_(\\d+)_.*", "\\1", x)
+  experiment_id_func <- \(x) gsub(".*Sample_(\\d+)_.*", "\\1", x)
 
   # Regex function to extract canonical sequence from precursor ID:
   # remove leading and trailing "_", charge (as ".x") where x is a digit,
   # and modification labels in "[]"
-  seq_col_func = \(x) gsub("_|(\\.\\d+)|(\\[.*\\])", "", x)
+  seq_col_func <- \(x) gsub("_|(\\.\\d+)|(\\[.*\\])", "", x)
 
   # Give presets to custom import function
   import_custom_format(datafile, config, path,
