@@ -22,13 +22,12 @@
 #'    system.file("extdata", "normP_report.csv", package = "tidyTPP")
 #'  source_config <-
 #'    system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
-#'  normP_report_file <- "normP_report.csv"
-#'  config_file <- "ATIC_config.csv"
+#'  file.copy(c(source_report, source_config), temp_loc)
 #'
 #'  # Analyse using single core, generate and show plots
 #'  normP_hits <-
-#'    apply_TPP_pipeline(datafile = normP_report_file,
-#'                       config = config_file,
+#'    apply_TPP_pipeline(datafile = "normP_report.csv",
+#'                       config = "ATIC_config.csv",
 #'                       path = temp_loc,
 #'                       to_plot = TRUE,
 #'                       max_cores = 1)
