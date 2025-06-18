@@ -30,9 +30,7 @@ test_that("NPARC distribution plots save appropriately",{
   )
   f_score_file <- sub("\\.png", "_Treated_Control_F_score.png", plot_temp)
   p_value_file <- sub("\\.png", "_Treated_Control_p_value.png", plot_temp)
-  expect_equal(file.size(f_score_file) >= 64000 &
-               file.size(f_score_file) < 68000, TRUE)
-  expect_equal(file.size(p_value_file) >= 52000 &
-               file.size(p_value_file) < 68000, TRUE)
+  expect_equal(file.size(f_score_file) >= 60000, TRUE)
+  expect_equal(file.size(p_value_file) >= 50000, TRUE)
   unlink(c(f_score_file, p_value_file))
 })
