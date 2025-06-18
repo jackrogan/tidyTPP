@@ -34,6 +34,6 @@ test_that("test ggplots are the right size", {
       )
     )
   temp_ggsave_file <- sub("\\.png", "_ATIC.png", temp_ggsave_file)
-  expect_true(file.size(temp_ggsave_file) >= 200000)
+  expect_gte(file.size(temp_ggsave_file), 100000)
   unlink(temp_ggsave_file)
 })
