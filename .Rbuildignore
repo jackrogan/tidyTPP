@@ -4,3 +4,6 @@
 ^README\.Rmd$
 ^codecov\.yml$
 ^\.github$
+^man/bibliography/references\.bib$
+^man/bibliography/nature\.csl$
+^man/bibliography$

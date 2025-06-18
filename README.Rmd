@@ -1,5 +1,9 @@
 ---
 output: github_document
+
+bibliography: man/bibliography/references.bib
+csl: man/bibliography/nature.csl
+link-citations: true
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -9,18 +13,62 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "75%"
 )
+
+library(knitcitations)
+cleanbib()
+cite_options(citation_format = 'pandoc', style = "html", hyperlink = "to.bib")
+
 ```
 
 # tidyTPP
 
 <!-- badges: start -->
-[![Codecov test coverage](https://codecov.io/gh/jackrogan/tidyTPP/graph/badge.svg)](https://app.codecov.io/gh/jackrogan/tidyTPP)
+[![Codecov test coverage](https://codecov.io/gh/jackrogan/tidyTPP/graph/badge.svg?token=OFYPL51CV2)](https://app.codecov.io/gh/jackrogan/tidyTPP)
 [![R-CMD-check](https://github.com/jackrogan/tidyTPP/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackrogan/tidyTPP/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of tidyTPP is to ...
+tidyTPP provides an analysis pipeline for *Thermal Protein Profiling (TPP)*
+proteomics data, with functions for reading in data from protein quantification
+software, normalising data, analysis, and hit-finding.
+
+The goal of tidyTPP is to provide a range of functions, each of which requires 
+data in a straightforward data frame or [tibble](https://tibble.tidyverse.org/) 
+and returns long-format data in a [tibble](https://tibble.tidyverse.org/) that 
+are readily understood and easily used for further analysis. The style of data
+is inspired by the [tidyverse](https://www.tidyverse.org/), and tidyTPP makes 
+use of several tidyverse packages - in particular 
+[tibble](https://tibble.tidyverse.org/) and 
+[ggplot2](https://ggplot2.tidyverse.org/). 
+
+### Currently supports:
+
+Importing:
+
+* Importing from *Thermo* Proteome Discoverer
+
+* Importing from Spectronaut
+
+* Importing with custom settings
+
+Normalisation and Analysis:
+
+* Single- and multi-threaded fitting of temperature-dependent protein melting
+  curves *(TPP-TR)*
+* Significance scores by melting point difference ($\Delta T_m$)
+
+* Significance scores by *non-pararametric analysis of response curves (NPARC)*
+
+Hit-finding
+
+* Identifying hits by $\Delta T_m$ p-value
+
+* Identifying its by *NPARC* F-score and p-value
+
+Plotting
+
+* Plotting *TPP-TR* melting-curves with [ggplot2](https://ggplot2.tidyverse.org/)
 
 ## Installation
 
@@ -33,25 +81,172 @@ pak::pak("jackrogan/tidyTPP")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+This example will walk through the main functions using 2-protein example data
 
-```{r example}
+```{r libs}
+# Import package
 library(tidyTPP)
-## basic example code
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+### Import
 
-```{r cars}
-summary(cars)
+*import_* functions read two files - quantification results output in a 
+program-specific format, and a configuration file, defining conditions, 
+replicates and temperatures, in the format shown.
+
+```{r example_import}
+# 2-protein example data
+two_prot_report <-
+    system.file("extdata", "normP_report.csv", package = "tidyTPP")
+experiment_config <-
+    system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+
+# Config file contents
+read.csv(experiment_config)[1:10,]
+
+# Import using spectronaut import format
+two_prot_quan_data <- 
+  import_spectronaut(datafile = two_prot_report,
+                     config = experiment_config)
+
+# Resulting tibble
+two_prot_quan_data
+
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
+Data at this stage can be plotted to directly observe relative but *not yet 
+normalised* protein curves.
 
-You can also embed plots, for example:
+``` {r example_import_plot, results='hide', fig.dim=c(8,4)}
+plot_melt(two_prot_quan_data)
 
-```{r pressure, echo = FALSE}
-plot(pressure)
 ```
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+### Normalisation
+*normalise_TPP* transforms relative TPP_TR relative intensity data, normalising 
+against fitted median melting curves, as described by Savitsky *et al.* 2014.
+`r citep("10.1126/science.1255784")`
+
+``` {r example_normalisation, fig.dim=c(8,7), fig.show='hide'}
+# Normalise 2-protein data, with visualisation
+two_prot_normalised <- 
+  normalise_TPP(TPP_tbl = two_prot_quan_data,
+                to_plot = TRUE)
+```
+![](`r knitr::fig_chunk('example_normalisation', 'png')`){width=75%}
+
+Resulting in the normalised data:
+
+```{r example_normalisation_plot, fig.show='hide', fig.dim=c(8,4)}
+# Plotted melting data points
+plot_melt(two_prot_normalised)
+```
+![](`r knitr::fig_chunk('example_normalisation_plot', 'png')`){width=75%}
+
+### Analysis
+*analyse_TPP* fits sigmoidal melting curves are fitted to each unique 
+combination of protein, condition and replicate, and features of the curve 
+(including $T_m$) calculated. Significance statistics are optionally calculated 
+from the data:
+
+* FDR-adjusted p-values are calculated for melting point differences from 
+  control conditions ($\Delta T_m$) for each replicate
+  `r citep("10.1126/science.1255784")`
+  
+* Scaled F-scores and FDR-adjusted p-values are calculated from *NPARC* analysis
+  for each protein`r citep("10.1074/mcp.TIR119.001481")`
+  
+Default behaviour is to apply both analyses:
+
+```{r example_analysis, results='hide', fig.dim=c(8,4)}
+# Analyse 2-protein data
+two_prot_analysed <- 
+  analyse_TPP(TPP_tbl = two_prot_normalised,
+              control_name = "Control",
+              p_value_methods = c("melting_point", "NPARC"))
+
+# Analysed data and fitted curves
+plot_melt(two_prot_analysed)
+```
+
+All statistics are appended as new measurements to the *tibble*:
+
+```{r example_analysis_table}
+# Full table
+two_prot_analysed
+
+# Statistics only
+one_prot_stats <- 
+  two_prot_analysed |>
+  dplyr::filter(Protein_ID == "ATIC", Condition != "Control") |>
+  dplyr::select(Protein_ID, 
+                Condition, 
+                Replicate, 
+                F_scaled, 
+                p_adj_NPARC,
+                melt_point,
+                diff_melt_point,
+                adj_pvalue
+                ) |>
+  dplyr::distinct()
+
+# 1. Melting point
+one_prot_stats |>
+  dplyr::select(Protein_ID, 
+                Condition, 
+                Replicate,
+                melt_point,
+                diff_melt_point,
+                adj_pvalue
+                )
+
+# 2. NPARC
+one_prot_stats |>
+  dplyr::select(Protein_ID, 
+                Condition,
+                F_scaled, 
+                p_adj_NPARC,
+                ) |>
+  dplyr::distinct()
+```
+
+### Hit Identification
+
+*get_TPP_hits* filters and summarises analysed data. Hits, by default, have an 
+NPARC-derived, FDR-adjusted p-value below 0.05,
+`r citep("10.1074/mcp.TIR119.001481")` $\Delta T_m$ in the same direction across 
+replicates, and $\Delta T_m$ for comparisons against controls greater than 
+between controls.`r citep("10.1126/science.1255784")`
+
+```{r example_hits, fig.show='hide', fig.dim=c(8,5)}
+# Get hits from analysed two-protein data
+two_prot_hits <- 
+  get_TPP_hits(TPP_data = two_prot_analysed,
+               hit_criteria = "default_hit_criteria",
+               to_plot = TRUE,
+               annotate = "melt_point")
+
+two_prot_hits
+```
+![](`r knitr::fig_chunk('example_hits', 'png')`){width=75%}
+
+### Export
+
+*get_TPP_hits* exported hit data by default, and full data can also be exported 
+as an excel .xlsx spreadsheet with *export_TPP*. Alternatives are delimited text
+files (.csv, .tsv) or R data.
+
+```{r example_export, results='hide'}
+# Export as .xlsx
+export_TPP(TPP_data = two_prot_analysed,
+           file_name = "TPP_results.xlsx",
+           format = "xlsx")
+
+```
+
+
+## References
+<!-- ### Bibliography -->
+```{r bib, include=FALSE}
+write.bibtex(file="man/bibliography/references.bib")
+```
