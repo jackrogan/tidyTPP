@@ -10,6 +10,8 @@ coverage](https://codecov.io/gh/jackrogan/tidyTPP/graph/badge.svg?token=OFYPL51C
 [![R-CMD-check](https://github.com/jackrogan/tidyTPP/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackrogan/tidyTPP/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
+## Introduction
+
 tidyTPP provides an analysis pipeline for *Thermal Protein Profiling
 (TPP)* proteomics data, with functions for reading in data from protein
 quantification software, normalising data, analysis, and hit-finding.
@@ -28,7 +30,7 @@ several tidyverse packages - in particular
 
 Importing:
 
-- Importing from *Thermo* Proteome Discoverer
+- Importing from Thermo Proteome Discoverer
 
 - Importing from Spectronaut
 
@@ -111,8 +113,8 @@ two_prot_quan_data <-
 #> TPP Data Import
 #> --------------------
 #> Read in:
-#> C:/Users/jr2020/AppData/Local/Temp/RtmpoPSJxM/temp_libpath26c44d25233d/tidyTPP/extdata/normP_report.csv 
-#> C:/Users/jr2020/AppData/Local/Temp/RtmpoPSJxM/temp_libpath26c44d25233d/tidyTPP/extdata/ATIC_config.csv 
+#> C:/Users/jr2020/AppData/Local/Temp/RtmpoPSJxM/temp_libpath26c4672e2e12/tidyTPP/extdata/normP_report.csv 
+#> C:/Users/jr2020/AppData/Local/Temp/RtmpoPSJxM/temp_libpath26c4672e2e12/tidyTPP/extdata/ATIC_config.csv 
 #> --------------------
 #> Pivoting to long table...
 #> Transforming experiment names...
@@ -151,7 +153,7 @@ plot_melt(two_prot_quan_data)
 
 ### Normalisation
 
-*normalise_TPP* transforms relative TPP_TR relative intensity data,
+*normalise_TPP* transforms relative TPP-TR relative intensity data,
 normalising against fitted median melting curves, as described by
 Savitsky *et al.* 2014.<sup>[1](#ref-Savitski_2014)</sup>
 
@@ -184,7 +186,7 @@ two_prot_normalised <-
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.75 s
+#> Total elapsed time: 0.76 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq
@@ -377,6 +379,59 @@ export_TPP(TPP_data = two_prot_analysed,
            file_name = "TPP_results.xlsx",
            format = "xlsx")
 ```
+
+### Pre-built pipeline
+
+For a function that applies a version of the entire pipeline,
+*apply_TPP_pipeline* executes the sequence:
+
+``` r
+import_spectronaut() |>
+normalise_TPP() |>
+analyse_TPP() |>
+export_TPP() |>
+get_TPP_hits()
+```
+
+This uses the following defaults in addition to the default behaviour of
+each included function:
+
+- Import a Spectronaut DIA peptide report *.csv*
+
+- Calculate *NPARC* and $\Delta T_m$ significance scores
+
+- Report all hits with:
+
+  - Adjusted *NPARC*-derived p-value \< 0.05
+
+  - $\Delta T_m$ in the same direction
+
+  - $\Delta T_m$ *vs.* control \> $\Delta T_m$ between controls
+
+  - Full results table and identified hits are exported as *.xlsx* files
+    with input file names modified with “\_Results.xlsx” and
+    “\_Hits.xlsx” respectively, in the same location as the initial file
+    input.
+
+Usage:
+
+``` r
+# Example pipeline call
+apply_TPP_pipeline(
+  datafile = "path_to_data_input.csv",
+  config = "path_to_config_file.csv",
+  path = "[optional]_path_to_shared_dir",
+  to_plot = FALSE,
+  max_cores = 4)
+```
+
+The (boolean) argument *to_plot* defines whether to show automated plots
+across all methods; if *TRUE*, normalisation, NPARC score distribution,
+and hit melting-point curves will all be plotted. Default *FALSE*.
+
+The (integer) argument *max_cores* is passed to curve-fitting methods
+and defines maximum parallel cores to use for these operations. Default
+*4*.
 
 ## References
 
