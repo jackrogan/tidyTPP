@@ -89,7 +89,8 @@ four_prot_report <-
     system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
     system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
-
+experiment_dir <- sub("4_protein_peptide_report\\.csv", "", four_prot_report)
+  
 # Config file contents
 read.csv(experiment_config)[1:10,]
 #>    Experiment Condition Replicate Temp
@@ -106,15 +107,16 @@ read.csv(experiment_config)[1:10,]
 
 # Import using spectronaut import format
 four_prot_quan_data <- 
-  import_spectronaut(datafile = four_prot_report,
-                     config = experiment_config)
+  import_spectronaut(datafile = "4_protein_peptide_report.csv",
+                     config = "4_protein_config.csv",
+                     path = experiment_dir)
 #> 
 #> --------------------
 #> TPP Data Import
 #> --------------------
 #> Read in:
-#> C:/Users/jr2020/AppData/Local/Temp/RtmpoPSJxM/temp_libpath26c45695eb2/tidyTPP/extdata/4_protein_peptide_report.csv 
-#> C:/Users/jr2020/AppData/Local/Temp/RtmpoPSJxM/temp_libpath26c45695eb2/tidyTPP/extdata/4_protein_config.csv 
+#> 4_protein_peptide_report.csv 
+#> 4_protein_config.csv 
 #> --------------------
 #> Pivoting to long table...
 #> Transforming experiment names...
@@ -158,7 +160,7 @@ normalising against fitted median melting curves, as described by
 Savitsky *et al.* 2014.<sup>[1](#ref-Savitski_2014)</sup>
 
 ``` r
-# Normalise 2-protein data, with visualisation
+# Normalise four-protein data, with visualisation
 four_prot_normalised <- 
   normalise_TPP(TPP_tbl = four_prot_quan_data,
                 to_plot = TRUE)
@@ -186,7 +188,7 @@ four_prot_normalised <-
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.75 s
+#> Total elapsed time: 0.74 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq

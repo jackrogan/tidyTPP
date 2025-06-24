@@ -102,14 +102,16 @@ four_prot_report <-
     system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
     system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
-
+experiment_dir <- sub("4_protein_peptide_report\\.csv", "", four_prot_report)
+  
 # Config file contents
 read.csv(experiment_config)[1:10,]
 
 # Import using spectronaut import format
 four_prot_quan_data <- 
-  import_spectronaut(datafile = four_prot_report,
-                     config = experiment_config)
+  import_spectronaut(datafile = "4_protein_peptide_report.csv",
+                     config = "4_protein_config.csv",
+                     path = experiment_dir)
 
 # Resulting tibble
 four_prot_quan_data
@@ -130,7 +132,7 @@ against fitted median melting curves, as described by Savitsky *et al.* 2014.
 `r citep("10.1126/science.1255784")`
 
 ``` {r example_normalisation, fig.dim=c(8,7), fig.show='hide'}
-# Normalise 2-protein data, with visualisation
+# Normalise four-protein data, with visualisation
 four_prot_normalised <- 
   normalise_TPP(TPP_tbl = four_prot_quan_data,
                 to_plot = TRUE)
