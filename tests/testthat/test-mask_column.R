@@ -1,5 +1,5 @@
 test_that("column masking functions as expected", {
-  x <- quan_data_ATIC
+  x <- quan_data_4prot
   x$quantity = 1
   y <- mask_column(x, "rel_quantity", "quantity")
   z <- mask_column(y, "quantity", "rel_quantity")

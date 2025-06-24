@@ -249,6 +249,7 @@ import_custom_format <- function(datafile,
   # Drop missing protein values
   TPP_tbl <- TPP_tbl[TPP_tbl$Protein_ID != "",]
 
+
   # Transform to long format if not already
   if(table_format == "wide"){
     if(!silent) cat("Pivoting to long table...\n")
@@ -272,7 +273,6 @@ import_custom_format <- function(datafile,
   # Match to Experiment values
   if(!silent) cat("Matching to experiment config data...\n")
   TPP_tbl <- merge(config_tbl, TPP_tbl)
-
   # Get T1 values. relative quantity
   if(!silent) cat("Finding relative quantity values...\n")
   T1_tbl <- TPP_tbl[order(TPP_tbl$Temp),]
@@ -286,7 +286,6 @@ import_custom_format <- function(datafile,
                   TPP_tbl$Condition,
                   TPP_tbl$Replicate,
                   TPP_tbl$Temp),]
-
   # Replicate should be discrete value
   TPP_tbl$Replicate <- sprintf("%02d", TPP_tbl$Replicate)
 

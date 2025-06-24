@@ -1,5 +1,5 @@
 test_that("curve is predicted from nls result", {
-  x <- quan_data_ATIC
+  x <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",]
   x <- x[x$Condition == "Control" & x$Replicate == "02",]
   x <- mask_column(x, "Temp", "x")
   x <- mask_column(x, "rel_quantity", "y")
@@ -15,7 +15,7 @@ test_that("curve is predicted from nls result", {
 })
 
 test_that("curve is predicted from list of nls result", {
-  x <- quan_data_ATIC
+  x <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",]
   x <- mask_column(x, "Temp", "x")
   x <- mask_column(x, "rel_quantity", "y")
   x_list <- split(x, ~ Condition + Replicate)

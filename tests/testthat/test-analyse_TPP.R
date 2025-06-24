@@ -1,5 +1,5 @@
 test_that("create_comparisons_tbl() works", {
-  x <- MP_data_ATIC
+  x <- analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
   reps <- unique(x$Replicate)
   conds <- unique(x$Condition)
   comparisons <- create_comparisons_tbl(conds, reps, "Control")
@@ -13,7 +13,7 @@ test_that("create_comparisons_tbl() works", {
 })
 
 test_that("create_control_comparison_tbl() works", {
-  x <- MP_data_ATIC
+  x <- analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
   reps <- unique(x$Replicate)
   conds <- unique(x$Condition)
   controls <- create_control_comparison_tbl(reps, "Control")
@@ -27,7 +27,7 @@ test_that("create_control_comparison_tbl() works", {
 })
 
 test_that("find_melting_point_diffs() works", {
-  x <- MP_data_ATIC
+  x <- analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
   reps <- unique(x$Replicate)
   conds <- unique(x$Condition)
   comparisons <- create_comparisons_tbl(conds, reps, "Control")
@@ -35,11 +35,11 @@ test_that("find_melting_point_diffs() works", {
   comparisons <- rbind(comparisons, controls)
   stat_x <- find_melting_point_diffs(x, comparisons)
 
-  expect_equal(stat_x$diff_melt_point, MP_stat_data_ATIC$diff_melt_point)
+  expect_equal(stat_x$diff_melt_point, x$diff_melt_point)
 })
 
 test_that("find_exp_stats() works for R2", {
-  x <- MP_stat_data_ATIC
+  x <- analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
   stat_x <- find_exp_stats(x, "min", "R_sq", "Protein_ID")
 
   expect_equal(stat_x$min_R_sq, x$min_R_sq)

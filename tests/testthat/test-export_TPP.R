@@ -17,15 +17,15 @@ test_that("all file types save and load identically", {
     tibble::as_tibble(y)
   }
 
-  ATIC <- tibble::as_tibble(MP_stat_data_ATIC)
+  four_prot <- tibble::as_tibble(analysis_data_4prot)
   if(requireNamespace("readxl", quietly=TRUE)){
-    xlsx_test <- save_and_load(ATIC, ".xlsx", readxl::read_xlsx)
-    expect_equal(ATIC, xlsx_test)
+    xlsx_test <- save_and_load(four_prot, ".xlsx", readxl::read_xlsx)
+    expect_equal(four_prot, xlsx_test)
   }
-  csv_test <- save_and_load(ATIC, ".csv", read.csv)
-  expect_equal(ATIC, csv_test)
-  tsv_test <- save_and_load(ATIC, ".tsv", read.delim)
-  expect_equal(ATIC, tsv_test)
-  rda_test <- save_and_load(ATIC, ".Rda", load_Rda_and_return)
-  expect_equal(ATIC, rda_test)
+  csv_test <- save_and_load(four_prot, ".csv", read.csv)
+  expect_equal(four_prot, csv_test)
+  tsv_test <- save_and_load(four_prot, ".tsv", read.delim)
+  expect_equal(four_prot, tsv_test)
+  rda_test <- save_and_load(four_prot, ".Rda", load_Rda_and_return)
+  expect_equal(four_prot, rda_test)
 })

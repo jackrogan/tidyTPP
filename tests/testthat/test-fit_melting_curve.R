@@ -1,5 +1,5 @@
-test_that("ATIC curve fit returns tibble", {
-  x_sep <- split(quan_data_ATIC, ~ Condition + Replicate)
+test_that("4 protein curve fit returns tibble", {
+  x_sep <- split(quan_data_4prot, ~ Protein_ID + Condition + Replicate)
   total = length(x_sep)
   params <-
     lapply(1:total,

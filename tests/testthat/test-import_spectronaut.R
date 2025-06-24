@@ -1,8 +1,8 @@
 test_that("import from spectronaut works", {
   expect_equal(
     import_spectronaut(
-      system.file("extdata", "ATIC_Peptide_Report.csv", package = "tidyTPP"),
-      system.file("extdata", "ATIC_config.csv", package = "tidyTPP"),
+      system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP"),
+      system.file("extdata", "4_protein_config.csv", package = "tidyTPP"),
       silent = TRUE),
-    tibble::tibble(quan_data_ATIC))
+    tibble::tibble(quan_data_4prot))
 })

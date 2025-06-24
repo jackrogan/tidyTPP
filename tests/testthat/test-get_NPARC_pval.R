@@ -1,15 +1,16 @@
 test_that("NPARC pvalue is as expected", {
-  x <- quan_data_ATIC
+  x <- quan_data_4prot
+  y <- analysis_data_4prot
   NPARC_x <-
     get_NPARC_pval(x,
                    max_cores = 1,
                    quantity_column = "rel_quantity",
                    silent = TRUE)
-  expect_equal(signif(NPARC_x[[1,4]],5), 0.000031918)
+  expect_equal(signif(NPARC_x[[1,4]], 5), 0.0000078601)
 })
 
 test_that("NPARC with no quantity behaves as expected",{
-  x <- quan_data_ATIC[1:6]
+  x <- quan_data_4prot[1:6]
   NPARC_x <-
     get_NPARC_pval(x,
                    max_cores = 1,
@@ -20,7 +21,7 @@ test_that("NPARC with no quantity behaves as expected",{
 
 test_that("NPARC distribution plots save appropriately",{
   plot_temp <- tempfile(fileext = ".png")
-  x <- quan_data_ATIC
+  x <- quan_data_4prot
   expect_no_error(
     get_NPARC_pval(x,
                    max_cores = 1,

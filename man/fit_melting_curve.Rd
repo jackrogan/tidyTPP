@@ -96,8 +96,8 @@ params
 
 }
 \references{
-Schellman J. A., The thermodynamics of solvent exchange.
-\emph{Biopolymers} 34, 1015–1026 (1994)
+Schellman J. A., The thermodynamics of solvent exchange
+\emph{Biopolymers} 34, 1015-1026 (1994)
 
 Savitski M. M. \emph{et al.}, Tracking cancer drugs in living cells by
 thermal profiling of the proteome. \emph{Science}, 346: 1255784 (2014)

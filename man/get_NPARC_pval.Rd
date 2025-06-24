@@ -112,5 +112,5 @@ Proteomics}, 18, 2506-2515, (2019)
 
 Benjamini, Y., and Hochberg, Y. Controlling the false discovery
 rate: a practical and powerful approach to multiple testing. \emph{Journal
-of the Royal Statistical Society Series B}, 57, 289–300 (1995)
+of the Royal Statistical Society Series B}, 57, 289-300 (1995)
 }
