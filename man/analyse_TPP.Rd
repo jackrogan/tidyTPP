@@ -113,8 +113,8 @@ difference-based p-value as described by Savitsky \emph{et al.} 2014, and
 NPARC F-score and p-value as described by Childs \emph{et al.} 2019.
 }
 \examples{
-# Minimal data - two-protein melt curve
-x <- quan_data_normP
+# Minimal data - four-protein melt curve
+x <- quan_data_4prot
 norm_x <- normalise_TPP(x)
 
 # Analyse - single core curve fitting

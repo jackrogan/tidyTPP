@@ -58,8 +58,8 @@
 #' @export
 #'
 #' @examples
-#' # Minimal data - ATIC melt curve
-#' x <- quan_data_ATIC
+#' # Minimal data - 4-protein melt curve (Protein A only)
+#' x <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",]
 #'
 #' # Separate condition and replicate
 #' x_sep <- split(x, ~ Condition + Replicate)

@@ -88,8 +88,8 @@ respective experimental groups.
 }
 }
 \examples{
-# Minimal data - two-protein melt curve
-x <- quan_data_normP
+# Minimal data - four-protein melt curve
+x <- quan_data_4prot
 
 # Normalise data
 normalise_TPP(x)

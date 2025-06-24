@@ -89,11 +89,11 @@
 #' @export
 #'
 #' @examples
-#' # Single protein - Spectronaut format
+#' # Four proteins - Spectronaut format
 #' sp_report_file <-
-#'   system.file("extdata", "ATIC_Peptide_Report.csv", package = "tidyTPP")
+#'   system.file("extdata", "4_protein_peptide_Report.csv", package = "tidyTPP")
 #' config_file <-
-#'   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+#'   system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
 #'
 #' # Regex function to extract experiment ID:
 #' # digits following "Sample_"

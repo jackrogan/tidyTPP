@@ -25,8 +25,8 @@
 #' @export
 #'
 #' @examples
-#' # Minimal data - analysed two-protein melt curve
-#' x <- MP_stat_data_ATIC
+#' # Minimal data - analysed four-protein melt curve
+#' x <- analysis_data_4prot
 #'
 #' # Default behaviour - save a .xlsx spreadsheet of results data.
 #' file <- tempfile()

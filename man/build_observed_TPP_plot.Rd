@@ -59,8 +59,8 @@ melting data points given in \code{data} only. To add fitted melting curves use
 \code{build_melt_plot_with_model()}.
 }
 \examples{
-# Minimal data - ATIC melt curve
-x <- quan_data_ATIC
+# Minimal data - four-protein melt curve (Protein A only)
+x <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",]
 
 # Create plot using default appearance
 build_observed_TPP_plot(x)

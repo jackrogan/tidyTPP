@@ -41,7 +41,8 @@ if any, \code{Temp}, and paired \code{model_quantity}
 Predict Protein Melting Curve
 }
 \examples{
-x <- MP_data_ATIC
+# 4-protein example (Protein A only)
+x <- analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
 predict_melt_curve(x)
 
 predict_melt_curve(x, n_predict = 100, low_T = 36, high_T = 66)

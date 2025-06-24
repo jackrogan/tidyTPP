@@ -45,8 +45,8 @@
 #' @export
 #'
 #' @examples
-#' # Minimal data - ATIC metling curve statistics
-#' x <- MP_stat_data_ATIC
+#' # Minimal data - 4-protein melting curve statistics
+#' x <- analysis_data_4prot
 #'
 #' # Melting point p-value generation
 #' get_pval_by_melting_point(x)

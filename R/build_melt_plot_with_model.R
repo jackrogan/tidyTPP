@@ -23,9 +23,11 @@
 #' @importFrom rlang .data
 #'
 #' @examples
-#' # Minimal data - ATIC melt curve
-#' x <- quan_data_ATIC
-#' x_predicted <- predict_melt_curve(MP_data_ATIC)
+#' # Minimal data - four-protein melt curve (Protein A only)
+#' x <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",]
+#' x_analysed <-
+#'   analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
+#' x_predicted <- predict_melt_curve(x_analysed)
 #'
 #' # Create plot using default appearance
 #' build_melt_plot_with_model(x, x_predicted)

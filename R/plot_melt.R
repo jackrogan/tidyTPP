@@ -30,22 +30,27 @@
 #' @export
 #'
 #' @examples
-#' # Minimal data - ATIC melt curve
-#' x <- quan_data_ATIC
-#' x_parameters <- MP_data_ATIC
+#' # Minimal data - four-protein melt curve (Protein A only)
+#' x <- quan_data_4prot
+#' norm_x <- normalise_TPP(x)
+#' norm_x <- norm_x[norm_x$Protein_ID == "Protein_A",]
+#' x_parameters <-
+#' analysis_data_4prot[analysis_data_4prot$Protein_ID == "Protein_A",]
 #'
 #' # Plot melting point curve
-#' plot_melt(x, x_parameters)
+#' plot_melt(norm_x, x_parameters)
 #'
 #' # Use combined data table
-#' x_plus_params <- merge(x, x_parameters)
+#' x_plus_params <- merge(norm_x, x_parameters)
 #' plot_melt(x_plus_params)
 #'
 #' # Customise plot
 #' plot_melt(
-#'   x,
+#'   norm_x,
 #'   x_parameters,
-#'   to_add_to_ggplot = ggplot2::ggtitle("ATIC", subtitle = "Protein Melting Curve"),
+#'   to_add_to_ggplot =
+#'     ggplot2::ggtitle("Protein A",
+#'                      subtitle = "Protein Melting Curve"),
 #'   n_predict = 200,
 #'   annotate = "both",
 #'   facets = FALSE)

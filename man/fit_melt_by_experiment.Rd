@@ -59,8 +59,8 @@ Both serial and parallel processing (using \code{PSOCK}) of the individual curve
 are supported.
 }
 \examples{
-# Minimal data - ATIC melt curve
-x <- quan_data_ATIC
+# Minimal data - four-protein melt curve
+x <- quan_data_4prot
 
 # Fit melting curves - 2-core processing
 fit_melt_by_experiment(x, max_cores = 2)

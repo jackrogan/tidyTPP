@@ -46,28 +46,28 @@ Apply tidyTPP TPP-TR pipeline with default settings: by default imports
 Spectronaut report \emph{.csv} file.
 }
 \examples{
- # Minimal Example - ATIC and CFL1 data
+ # Minimal Example - four-protein data
  temp_loc <- tempdir()
  source_report <-
-   system.file("extdata", "normP_report.csv", package = "tidyTPP")
+   system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
  source_config <-
-   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+   system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
  file.copy(c(source_report, source_config), temp_loc)
 
  # Analyse using single core, generate and show plots
  normP_hits <-
-   apply_TPP_pipeline(datafile = "normP_report.csv",
-                      config = "ATIC_config.csv",
+   apply_TPP_pipeline(datafile = "4_protein_peptide_report.csv",
+                      config = "4_protein_config.csv",
                       path = temp_loc,
                       to_plot = TRUE,
                       max_cores = 1)
 
  unlink(
   c(
-    paste0(temp_loc, "\\\\", "normP_report.csv"),
-    paste0(temp_loc, "\\\\", "ATIC_config.csv"),
-    paste0(temp_loc, "\\\\", "normP_report_Results.xlsx"),
-    paste0(temp_loc, "\\\\", "normP_report_Hits.xlsx"))
+    paste0(temp_loc, "\\\\", "4_protein_peptide_report.csv"),
+    paste0(temp_loc, "\\\\", "4_protein_config.csv"),
+    paste0(temp_loc, "\\\\", "4_protein_peptide_Results.xlsx"),
+    paste0(temp_loc, "\\\\", "4_protein_peptide_Hits.xlsx"))
   )
 
  normP_hits

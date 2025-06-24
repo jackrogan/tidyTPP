@@ -10,11 +10,11 @@
 #' @export
 #'
 #' @examples
-#' # Single protein - Proteome discoverer format
+#' # Single protein example - Proteome discoverer format
 #' sp_report_file <-
-#'   system.file("extdata", "ATIC_Proteins_PD.txt", package = "tidyTPP")
+#'   system.file("extdata", "Protein_A_PD.txt", package = "tidyTPP")
 #' config_file <-
-#'   system.file("extdata", "ATIC_config.csv", package = "tidyTPP")
+#'   system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
 #'
 #' # Import data
 #' sp_tbl <- import_proteomediscoverer(sp_report_file, config_file)

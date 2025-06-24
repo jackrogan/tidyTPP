@@ -120,15 +120,15 @@ Melting point curves for hits will be generated if \code{to_plot} is \code{TRUE}
 or \code{to_save} is not \code{NULL}.
 }
 \examples{
-# Minimal data - analysed single-protein dataset
-x <- MP_stat_data_ATIC
+# Minimal data - analysed four-protein dataset
+x <- analysis_data_4prot
 hit_results_file <- tempfile(pattern = "hits_", fileext = ".xlsx")
 
-# Default criteria return no hits - p-values do not meet criteria
+# Default criteria returns 1 hit - Protein A
 hits <- get_TPP_hits(x, to_export = NULL, to_plot = FALSE)
 hits
 
-# Using only subset of hit criteria returns single protein to export as .xlsx
+# Using only subset of hit criteria, exporting as .xlsx
 hits <-
   get_TPP_hits(
     x,

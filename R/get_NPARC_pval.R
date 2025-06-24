@@ -41,7 +41,7 @@
 #'
 #' @examples
 #' # Minimal data - two-protein melt curve
-#' x <- quan_data_normP
+#' x <- quan_data_4prot
 #' norm_x <- normalise_TPP(x)
 #'
 #' # NPARC F-score and p-value generation
