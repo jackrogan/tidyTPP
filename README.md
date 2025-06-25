@@ -41,10 +41,11 @@ Normalisation and Analysis:
 - Single- and multi-threaded fitting of temperature-dependent protein
   melting curves *(TPP-TR)*
 
-- Significance scores by melting point difference ($\Delta T_m$)
+- Significance scores by melting point difference
+  ($\Delta T_m$)<sup>[1](#ref-Savitski_2014)</sup>
 
 - Significance scores by *non-pararametric analysis of response curves
-  (NPARC)*
+  (NPARC)*<sup>[2](#ref-Childs_2019)</sup>
 
 Hit-finding
 
@@ -67,15 +68,113 @@ You can install the development version of tidyTPP from
 pak::pak("jackrogan/tidyTPP")
 ```
 
-## Example
+## Example: Pre-built pipeline
+
+A version of the entire pipeline, with defaults to match common uses, is
+available with *apply_TPP_pipeline*. This executes the following
+sequence:
+
+``` r
+import_TPP() |>
+  normalise_TPP() |>
+  analyse_TPP() |>
+  export_TPP() |>
+  get_TPP_hits()
+```
+
+The function uses the following defaults in addition to the default
+behaviour of each included function:
+
+- Import supported proteomics quantification data formats
+
+- Calculate *NPARC* and $\Delta T_m$ significance scores
+
+- Report all hits with:
+
+  - Adjusted *NPARC*-derived p-value \< 0.05
+
+  - $\Delta T_m$ in the same direction
+
+  - $\Delta T_m$ *vs.* control \> $\Delta T_m$ between controls
+
+  - Full results table and identified hits are exported as *.xlsx* files
+    with input file names modified with “\_Results.xlsx” and
+    “\_Hits.xlsx” respectively, in the same location as the initial file
+    input.
+
+Usage:
+
+``` r
+# Example pipeline call
+apply_TPP_pipeline(
+  datafile = "path_to_data_input.csv",
+  config = "path_to_config_file.csv",
+  path = "[optional]_path_to_shared_dir",
+  import_format = "format_name",
+  to_plot = FALSE,
+  max_cores = 4,
+  silent = FALSE)
+```
+
+The character argument *import_format* defines which of the inbuilt
+import functions to use to read in data files. Currently:
+
+- “Spectronaut”, “SN” - imports from peptide tables exported from
+  *Spectronaut* DIA quantification reports.
+
+- “ProteomeDiscoverer”, “PD” - imports from protein tables exported from
+  *Thermo Proteome Discoverer* DDA quantification results.
+
+- Default “Spectronaut”.
+
+The (boolean) argument *to_plot* defines whether to show automated plots
+across all methods; if *TRUE*, normalisation, NPARC score distribution,
+and hit melting-point curves will all be plotted.
+
+- Default *FALSE*.
+
+The (integer) argument *max_cores* is passed to curve-fitting methods
+and defines maximum parallel cores to use for these operations.
+
+- Default *4*.
+
+``` r
+# Pipeline example: 4-protein test data
+library(tidyTPP)
+
+four_prot_report <-
+    system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
+experiment_config <-
+    system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
+
+# Apply pipeline
+TPP_hits <- 
+  apply_TPP_pipeline(datafile = four_prot_report,
+                    config = experiment_config,
+                    import_format = "spectronaut",
+                    to_plot = TRUE,
+                    max_cores = 4)
+```
+
+Result:
+
+``` r
+TPP_hits
+#> # A tibble: 1 × 10
+#>   Protein_ID Condition Comparison         F_scaled p_adj_NPARC max_adj_pvalue
+#>   <chr>      <chr>     <chr>                 <dbl>       <dbl>          <dbl>
+#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.195
+#> # ℹ 4 more variables: mean_melt_point <dbl>, mean_control_melt_point <dbl>,
+#> #   mean_diff_melt_point <dbl>, mean_control_diff_melt_point <dbl>
+```
+
+<img src="man/figures/README-apply_pipeline-4.png"
+style="width:75.0%" />
+
+## Example: Function detail
 
 This example will walk through the main functions using 2-protein
 example data
-
-``` r
-# Import package
-library(tidyTPP)
-```
 
 ### Import
 
@@ -188,7 +287,7 @@ four_prot_normalised <-
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.75 s
+#> Total elapsed time: 0.68 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq
@@ -381,74 +480,6 @@ export_TPP(TPP_data = four_prot_analysed,
            file_name = "TPP_results.xlsx",
            format = "xlsx")
 ```
-
-### Pre-built pipeline
-
-For a function that applies a version of the entire pipeline,
-*apply_TPP_pipeline* executes the sequence:
-
-``` r
-import_TPP() |>
-normalise_TPP() |>
-analyse_TPP() |>
-export_TPP() |>
-get_TPP_hits()
-```
-
-This uses the following defaults in addition to the default behaviour of
-each included function:
-
-- Import supported proteomics quantification data formats
-
-- Calculate *NPARC* and $\Delta T_m$ significance scores
-
-- Report all hits with:
-
-  - Adjusted *NPARC*-derived p-value \< 0.05
-
-  - $\Delta T_m$ in the same direction
-
-  - $\Delta T_m$ *vs.* control \> $\Delta T_m$ between controls
-
-  - Full results table and identified hits are exported as *.xlsx* files
-    with input file names modified with “\_Results.xlsx” and
-    “\_Hits.xlsx” respectively, in the same location as the initial file
-    input.
-
-Usage:
-
-``` r
-# Example pipeline call
-apply_TPP_pipeline(
-  datafile = "path_to_data_input.csv",
-  config = "path_to_config_file.csv",
-  path = "[optional]_path_to_shared_dir",
-  import_format = "format_name",
-  to_plot = FALSE,
-  max_cores = 4)
-```
-
-The character argument *import_format* defines which of the inbuilt
-import functions to use to read in data files. Currently:
-
-- “Spectronaut”, “SN” - imports from peptide tables exported from
-  *Spectronaut* DIA quantification reports.
-
-- “ProteomeDiscoverer”, “PD” - imports from protein tables exported from
-  *Thermo Proteome Discoverer* DDA quantification results.
-
-- Default “Spectronaut”.
-
-The (boolean) argument *to_plot* defines whether to show automated plots
-across all methods; if *TRUE*, normalisation, NPARC score distribution,
-and hit melting-point curves will all be plotted.
-
-- Default *FALSE*.
-
-The (integer) argument *max_cores* is passed to curve-fitting methods
-and defines maximum parallel cores to use for these operations.
-
-- Default *4*.
 
 ## References
 
