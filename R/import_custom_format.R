@@ -26,7 +26,7 @@
 #' \emph{.xlsx} spreadsheet containing the protein quantity data.
 #' @param config  Either a character, specifying the file name of a delimited
 #'  file with experiment configuration, to be opened with
-#'  [read.table]/[readxl::read_excel] or a `data.frame`/`tibble` with
+#'  [read.table] / [readxl::read_excel] or a `data.frame` / `tibble` with
 #'  configuration information.
 #'
 #'  This should take the form of a table with the column names
@@ -165,6 +165,7 @@ import_custom_format <- function(datafile,
   # Default wide format
   table_format <- table_format[1]
 
+  quan_cols <- NULL
   # Required columns:
   # Protein ID, Peptide Precursor (if present), PG raw quantities
   if(!is.null(quantity_pattern)){

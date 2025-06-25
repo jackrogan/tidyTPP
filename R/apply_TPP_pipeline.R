@@ -4,7 +4,18 @@
 #' Apply tidyTPP TPP-TR pipeline with default settings: by default imports
 #' Spectronaut report \emph{.csv} file.
 #'
-#' @inheritParams import_custom_format
+#' @inheritParams import_TPP
+#' @param import_format Character. Specify a format to import with an
+#'  \emph{import_} function:
+#'
+#'  * "Spectronaut" or "SN" - peptide report from \emph{Spectronaut} DIA protein
+#'  quantification (\emph{.csv}): [import_spectronaut]
+#'
+#'  * "ProteomeDiscover" or "PD" - exported proteins table from
+#'  \emph{Thermo Proteome Discoverer} DDA quantification (\emph{.txt}):
+#'  [import_proteomediscoverer]
+#'
+#'  * For a custom format import, use [import_TPP] directly
 #' @param to_plot Boolean. Whether to generate plots to the console:
 #'  * Normalisation curves
 #'  * NPARC analysis F-score and p-value distribution
@@ -29,6 +40,7 @@
 #'    apply_TPP_pipeline(datafile = "4_protein_peptide_report.csv",
 #'                       config = "4_protein_config.csv",
 #'                       path = temp_loc,
+#'                       import_format = "Spectronaut",
 #'                       to_plot = TRUE,
 #'                       max_cores = 1)
 #'
@@ -44,6 +56,7 @@
 apply_TPP_pipeline <- function(datafile,
                                config,
                                path = NULL,
+                               import_format = "Spectronaut",
                                to_plot = FALSE,
                                max_cores = 4){
 
@@ -55,7 +68,7 @@ apply_TPP_pipeline <- function(datafile,
     full_path <- datafile
   }
 
-  import_spectronaut(datafile, config, path) |>
+  import_TPP(datafile, config, path, import_format) |>
 
   normalise_TPP(to_plot = to_plot) |>
 

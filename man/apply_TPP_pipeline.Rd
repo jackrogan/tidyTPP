@@ -8,6 +8,7 @@ apply_TPP_pipeline(
   datafile,
   config,
   path = NULL,
+  import_format = "Spectronaut",
   to_plot = FALSE,
   max_cores = 4
 )
@@ -18,7 +19,7 @@ apply_TPP_pipeline(
 
 \item{config}{Either a character, specifying the file name of a delimited
 file with experiment configuration, to be opened with
-\link{read.table}/\link[readxl:read_excel]{readxl::read_excel} or a \code{data.frame}/\code{tibble} with
+\link{read.table} / \link[readxl:read_excel]{readxl::read_excel} or a \code{data.frame} / \code{tibble} with
 configuration information.
 
 This should take the form of a table with the column names
@@ -27,6 +28,17 @@ This should take the form of a table with the column names
 
 \item{path}{Character. Optionally, the path to a directory containing the
 data and configuration files. If given, this will be appended to both paths.}
+
+\item{import_format}{Character. Specify a format to import with an
+\emph{import_} function:
+\itemize{
+\item "Spectronaut" or "SN" - peptide report from \emph{Spectronaut} DIA protein
+quantification (\emph{.csv}): \link{import_spectronaut}
+\item "ProteomeDiscover" or "PD" - exported proteins table from
+\emph{Thermo Proteome Discoverer} DDA quantification (\emph{.txt}):
+\link{import_proteomediscoverer}
+\item For a custom format import, use \link{import_TPP} directly
+}}
 
 \item{to_plot}{Boolean. Whether to generate plots to the console:
 \itemize{
@@ -59,6 +71,7 @@ Spectronaut report \emph{.csv} file.
    apply_TPP_pipeline(datafile = "4_protein_peptide_report.csv",
                       config = "4_protein_config.csv",
                       path = temp_loc,
+                      import_format = "Spectronaut",
                       to_plot = TRUE,
                       max_cores = 1)
 

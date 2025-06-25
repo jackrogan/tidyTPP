@@ -89,7 +89,7 @@ four_prot_report <-
     system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
     system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
-experiment_dir <- sub("4_protein_peptide_report\\.csv", "", four_prot_report)
+experiment_dir <- system.file("extdata", package = "tidyTPP")
   
 # Config file contents
 read.csv(experiment_config)[1:10,]
@@ -188,7 +188,7 @@ four_prot_normalised <-
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.74 s
+#> Total elapsed time: 0.75 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq
@@ -388,7 +388,7 @@ For a function that applies a version of the entire pipeline,
 *apply_TPP_pipeline* executes the sequence:
 
 ``` r
-import_spectronaut() |>
+import_TPP() |>
 normalise_TPP() |>
 analyse_TPP() |>
 export_TPP() |>
@@ -398,7 +398,7 @@ get_TPP_hits()
 This uses the following defaults in addition to the default behaviour of
 each included function:
 
-- Import a Spectronaut DIA peptide report *.csv*
+- Import supported proteomics quantification data formats
 
 - Calculate *NPARC* and $\Delta T_m$ significance scores
 
@@ -423,17 +423,32 @@ apply_TPP_pipeline(
   datafile = "path_to_data_input.csv",
   config = "path_to_config_file.csv",
   path = "[optional]_path_to_shared_dir",
+  import_format = "format_name",
   to_plot = FALSE,
   max_cores = 4)
 ```
 
+The character argument *import_format* defines which of the inbuilt
+import functions to use to read in data files. Currently:
+
+- “Spectronaut”, “SN” - imports from peptide tables exported from
+  *Spectronaut* DIA quantification reports.
+
+- “ProteomeDiscoverer”, “PD” - imports from protein tables exported from
+  *Thermo Proteome Discoverer* DDA quantification results.
+
+- Default “Spectronaut”.
+
 The (boolean) argument *to_plot* defines whether to show automated plots
 across all methods; if *TRUE*, normalisation, NPARC score distribution,
-and hit melting-point curves will all be plotted. Default *FALSE*.
+and hit melting-point curves will all be plotted.
+
+- Default *FALSE*.
 
 The (integer) argument *max_cores* is passed to curve-fitting methods
-and defines maximum parallel cores to use for these operations. Default
-*4*.
+and defines maximum parallel cores to use for these operations.
+
+- Default *4*.
 
 ## References
 

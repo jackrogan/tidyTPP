@@ -28,7 +28,7 @@ import_custom_format(
 
 \item{config}{Either a character, specifying the file name of a delimited
 file with experiment configuration, to be opened with
-\link{read.table}/\link[readxl:read_excel]{readxl::read_excel} or a \code{data.frame}/\code{tibble} with
+\link{read.table} / \link[readxl:read_excel]{readxl::read_excel} or a \code{data.frame} / \code{tibble} with
 configuration information.
 
 This should take the form of a table with the column names
