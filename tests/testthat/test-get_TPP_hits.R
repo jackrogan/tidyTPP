@@ -4,8 +4,8 @@ test_that("4 protein hits by Tm are correct", {
   hits <-
     get_TPP_hits(
       x[c(1:3, 6:ncol(x))],
-      hit_criteria = list(pvalue_max_threshold = 0.2,
-                          pvalue_min_threshold = 0.15,
+      hit_criteria = list(pvalue_max_threshold = 0.7,
+                          pvalue_min_threshold = 0.7,
                           DTm_same_sign = TRUE,
                           DTm_gt_Dcontrol = TRUE,
                           slope_threshold = -0.06),
@@ -19,7 +19,7 @@ test_that("4 protein hits by Tm are correct", {
       Protein_ID = "Protein_A",
       Condition = "Treated",
       Comparison = "Treated_vs_Control",
-      max_adj_pvalue = 0.194889525,
+      max_adj_pvalue = 0.603836633,
       mean_melt_point = 50.9013787,
       mean_control_melt_point = 49.4093434,
       mean_diff_melt_point = 1.49203528,
@@ -46,7 +46,7 @@ test_that("Default hits (by NPARC) are correct", {
       Comparison = "Treated_vs_Control",
       F_scaled = 4.51772872,
       p_adj_NPARC = 0.001793434,
-      max_adj_pvalue = 0.194889525,
+      max_adj_pvalue = 0.603836633,
       mean_melt_point = 50.9013787,
       mean_control_melt_point = 49.4093434,
       mean_diff_melt_point = 1.49203528,

@@ -4,7 +4,7 @@
 \alias{get_pval_by_melting_point}
 \title{Get p-value by comparison of modelled melting point differences}
 \usage{
-get_pval_by_melting_point(fit_tbl)
+get_pval_by_melting_point(fit_tbl, comparisons = NULL)
 }
 \arguments{
 \item{fit_tbl}{A data frame (or \code{tibble}) of parameters from fitting melting
@@ -23,6 +23,20 @@ and control sample
 \item \code{min_slope} - the slope (\eqn{f'(T_{infl})}) of the steepest curve per
 comparison
 }}
+
+\item{comparisons}{A data.frame containing the information needed to build
+the comparisons to use to calculate \eqn{\Delta T_m} and other statistics.
+Columns must be \emph{Condition_01}, \emph{Replicate_01},
+\emph{Condition_02} and \emph{Replicate_01}, \emph{e.g}:\tabular{rrrr}{
+   Condition_01 \tab Replicate_01 \tab Condition_02 \tab Replicate_01 \cr
+   Treated \tab 01 \tab Control \tab 01 \cr
+   Treated \tab 02 \tab Control \tab 02 \cr
+}
+
+
+If no table is given, one will be generated based on the conditions in the
+data, comparing each condition to control and like-for-like replicate
+comparisons.}
 }
 \value{
 A \code{tibble} containing all data in fit_tbl, with additional calculated

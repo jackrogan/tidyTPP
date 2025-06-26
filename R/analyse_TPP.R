@@ -186,7 +186,7 @@ analyse_TPP <-
   if(!silent) cat("Calculate p-values...\n")
   # Get P values (from Tm as in Savitsky 2014)
   if("melting_point" %in% p_value_methods) {
-    fit_tbl <- get_pval_by_melting_point(fit_tbl)
+    fit_tbl <- get_pval_by_melting_point(fit_tbl, comparisons)
   }
 
   # Get NPARC p-values (as in Childs 2019)

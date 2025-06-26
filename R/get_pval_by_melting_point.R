@@ -16,6 +16,7 @@
 #'    Benjamini-Hochberg procedure to control the false discovery rate
 #'    (\emph{FDR}).
 #'
+#' @inheritParams analyse_TPP
 #' @param fit_tbl A data frame (or `tibble`) of parameters from fitting melting
 #'  curves to each protein and taking melting point differences. This must
 #'  include the columns:
@@ -51,11 +52,24 @@
 #' # Melting point p-value generation
 #' get_pval_by_melting_point(x)
 #'
-get_pval_by_melting_point <- function(fit_tbl){
+get_pval_by_melting_point <- function(fit_tbl, comparisons = NULL){
+
+  # Check and make sure comparisons are given
+  if(is.null(comparisons)){
+    conds <- unique(fit_tbl$Condition)
+    reps <- unique(fit_tbl$Replicate)
+    comparisons <- create_comparisons_tbl(conds, reps, "Control")
+  }
+
+  # Do not include control-control comparisons in p-value calculations
+  sub_fit_tbl <-
+    fit_tbl[fit_tbl$Condition %in% comparisons$Condition_01,]
+
   # Get p-values (from Tm as in Savitsky 2014)
   # 1. Filter to min R2 > 0.8, max vehicle plateau < 0.3
   pval_tbl <-
-    fit_tbl[fit_tbl$min_R_sq > 0.8 & fit_tbl$max_control_plateau < 0.3,]
+    sub_fit_tbl[sub_fit_tbl$min_R_sq > 0.8 &
+                  sub_fit_tbl$max_control_plateau < 0.3,]
   pval_tbl <- pval_tbl[!is.na(pval_tbl$diff_melt_point),]
 
   # 2. Order proteins by ascending min slope (of protein)
