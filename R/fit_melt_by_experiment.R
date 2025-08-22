@@ -102,6 +102,7 @@ fit_melt_by_experiment <-
       cl <- parallel::makeCluster(n_cores)
       parallel::clusterExport(cl, list(
         "fit_melting_curve",
+        "get_model_fit_stats",
         "get_sigmoid_TPPTR_formula",
         "get_sigmoid_formula_root",
         "experiment_cols",

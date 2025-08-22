@@ -102,7 +102,8 @@ F-statistic and p-value and save with \code{\link[=ggsave]{ggsave()}}}
 }
 \value{
 A \code{tibble} containing all data in TPP_tbl, with additional calculated
-columns (where possible) detaling curve parameters and comparison statistics
+columns (where possible) detailing curve parameters and comparison
+statistics
 }
 \description{
 \code{analyse_TPP()} transforms \emph{Thermal Protein Profiling} (TPP) relative

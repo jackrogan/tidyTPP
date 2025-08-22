@@ -127,8 +127,7 @@ apply_TPP_pipeline(
   path = "[optional]_path_to_shared_dir",
   import_format = "format_name",
   to_plot = FALSE,
-  max_cores = 4,
-  silent = FALSE)
+  max_cores = 4)
 ```
 The character argument *import_format* defines which of the inbuilt import 
 functions to use to read in data files. Currently:

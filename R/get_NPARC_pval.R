@@ -18,6 +18,9 @@
 #'    (\emph{FDR}).
 #'
 #' @inheritParams analyse_TPP
+#' @param fit_method Character. Method used to fit alternative and null
+#'  hypotheses. One of:
+#'  * `splines`: approximate curves using splines - faster completion.
 #' @param degrees_of_freedom Numeric. Range of degrees of freedom to use to
 #'  generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.
 #' @param max_cores Integer. The maximum number of cores to parallelise the
@@ -55,6 +58,7 @@
 #'                max_cores = 1,
 #'                to_plot = TRUE)
 get_NPARC_pval <- function(TPP_tbl,
+                           fit_method = "splines",
                            degrees_of_freedom = c(4:7),
                            max_cores = 4,
                            comparisons = NULL,
@@ -65,6 +69,7 @@ get_NPARC_pval <- function(TPP_tbl,
                            silent = FALSE){
 
   TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
+
   # Check and make sure comparisons are given
   if(is.null(comparisons)){
     conds <- unique(TPP_tbl$Condition)
@@ -103,7 +108,7 @@ get_NPARC_pval <- function(TPP_tbl,
         }
         cl <- parallel::makeCluster(n_cores)
         parallel::clusterExport(cl, list(
-          "get_spline_model_details",
+          "get_model_fit_stats",
           "get_fit_details",
           "get_natural_spline_lm"
         ),
@@ -259,6 +264,8 @@ get_NPARC_pval <- function(TPP_tbl,
   NPARC <- mask_column(NPARC_tbl, "quantity", quantity_column)
   tibble::as_tibble(NPARC_tbl)
 }
+
+
 
 
 # Plot F-score density distribution

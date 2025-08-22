@@ -117,34 +117,6 @@ fit_melting_curve <- function(data,
     return(NULL)
   }
 
-  # Get additional parameters: R2, melting point inflection point, slope
-  # R2
-  SS_total <-
-    sum((pre_model_data$y - mean(pre_model_data$y, na.rm=TRUE))^2, na.rm=TRUE)
-  SS_resid <-
-    sum((pre_model_data$y - stats::predict(fit))^2 , na.rm=TRUE)
-  R_sq <- 1 - SS_resid / SS_total
-  # Tm
-  pars <- fit$m$getPars()
-  a <- pars["a"]
-  b <- pars["b"]
-  pl <- pars["pl"]
-  melt_point <-  suppressWarnings(a / (b - log((1 - pl) / (0.5 - pl) - 1)))
-  if(is.na(melt_point)) melt_point <- NA
-  # Tinfl
-  T_interval <- c(min(pre_model_data$x), max(pre_model_data$x))
-  infl_point <-
-    get_sigmoid_formula_root(get_sigmoid_TPPTR_formula(2),
-                             a = a, b = b, pl = pl,
-                             x_interval = T_interval)
-  # Slope
-  x <- infl_point
-  if(!is.na(infl_point)){
-    slope <- eval(parse(text = get_sigmoid_TPPTR_formula(1)))
-  } else {
-    slope <- NA
-  }
-
   if(!silent) {
     progress = floor(10 * protein_num / protein_total)
     cat("\r|", strrep("=", progress), strrep(" ", 10 - progress), "| ",
@@ -152,40 +124,5 @@ fit_melting_curve <- function(data,
     if(protein_num == protein_total) cat("\n")
   }
 
-  tibble::tibble(a, b, plateau = pl, melt_point, infl_point, slope, R_sq)
-}
-
-# Function to return melting curve sigmoid formula and derivatives
-get_sigmoid_TPPTR_formula <- function(der = 0){
-  if(der == 0){
-    stats::as.formula("y ~ ((1 - pl) / (1 + exp(b - (a / x)))) + pl")
-  } else if(der == 1){
-    stats::as.formula(
-      "y ~ -((1 - pl) * (exp(-(a/x - b)) * (a/x^2))/(1 + exp(-(a/x - b)))^2)"
-    )
-  } else if(der == 2){
-    stats::as.formula(
-      "y ~ -((1 - pl) * 1 * (exp(-(a/x - b)) * (a/x^2) *
-      (a/x^2) - exp(-(a/x - b)) * (a * (2 * x)/(x^2)^2)) /
-      (1 + exp(-(a/x - b)))^2 - (1 - pl) * 1 * (exp(-(a/x - b)) *
-      (a/x^2)) * (2 * (exp(-(a/x - b)) * (a/x^2) *
-      (1 + exp(-(a/x - b)))))/((1 + exp(-(a/x - b)))^2)^2)"
-    )
-  }
-}
-
-# Function to get root of supplied formula
-get_sigmoid_formula_root <- function(formula, a, b, pl, x_interval){
-  form_root <-
-    try(stats::uniroot(function(x, a, b, pl) eval(parse(text = formula)),
-                       a = a, b = b, pl = pl,
-                       interval = x_interval,
-                       tol = 0.0001),
-        silent = TRUE)
-
-  if(inherits(form_root, "try-error")){
-    return(NA)
-  } else {
-    return(form_root$root)
-  }
+  tibble::tibble(get_model_fit_stats(fit))
 }

@@ -112,8 +112,7 @@ apply_TPP_pipeline(
   path = "[optional]_path_to_shared_dir",
   import_format = "format_name",
   to_plot = FALSE,
-  max_cores = 4,
-  silent = FALSE)
+  max_cores = 4)
 ```
 
 The character argument *import_format* defines which of the inbuilt
@@ -163,7 +162,7 @@ TPP_hits
 #> # A tibble: 1 × 10
 #>   Protein_ID Condition Comparison         F_scaled p_adj_NPARC max_adj_pvalue
 #>   <chr>      <chr>     <chr>                 <dbl>       <dbl>          <dbl>
-#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.195
+#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.604
 #> # ℹ 4 more variables: mean_melt_point <dbl>, mean_control_melt_point <dbl>,
 #> #   mean_diff_melt_point <dbl>, mean_control_diff_melt_point <dbl>
 ```
@@ -287,7 +286,7 @@ four_prot_normalised <-
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.68 s
+#> Total elapsed time: 0.69 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq
@@ -406,8 +405,8 @@ one_prot_stats |>
 #> # A tibble: 2 × 6
 #>   Protein_ID Condition Replicate melt_point diff_melt_point adj_pvalue
 #>   <chr>      <chr>     <chr>          <dbl>           <dbl>      <dbl>
-#> 1 Protein_A  Treated   01              51.3            1.63      0.115
-#> 2 Protein_A  Treated   02              50.5            1.36      0.195
+#> 1 Protein_A  Treated   01              51.3            1.63      0.604
+#> 2 Protein_A  Treated   02              50.5            1.36      0.604
 
 # 2. NPARC
 one_prot_stats |>
@@ -461,7 +460,7 @@ four_prot_hits
 #> # A tibble: 1 × 10
 #>   Protein_ID Condition Comparison         F_scaled p_adj_NPARC max_adj_pvalue
 #>   <chr>      <chr>     <chr>                 <dbl>       <dbl>          <dbl>
-#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.195
+#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.604
 #> # ℹ 4 more variables: mean_melt_point <dbl>, mean_control_melt_point <dbl>,
 #> #   mean_diff_melt_point <dbl>, mean_control_diff_melt_point <dbl>
 ```

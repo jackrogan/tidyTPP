@@ -6,6 +6,7 @@
 \usage{
 get_NPARC_pval(
   TPP_tbl,
+  fit_method = "splines",
   degrees_of_freedom = c(4:7),
   max_cores = 4,
   comparisons = NULL,
@@ -29,6 +30,12 @@ thermal protein profiling (TPP) experiment. This must contain the columns:
 
 If replicates are not given, a single replicate per condition will be
 assumed.}
+
+\item{fit_method}{Character. Method used to fit alternative and null
+hypotheses. One of:
+\itemize{
+\item \code{splines}: approximate curves using splines - faster completion.
+}}
 
 \item{degrees_of_freedom}{Numeric. Range of degrees of freedom to use to
 generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.}

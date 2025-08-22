@@ -68,7 +68,8 @@
 #' [nls_multstart()]
 #'
 #' @return A `tibble` containing all data in TPP_tbl, with additional calculated
-#'  columns (where possible) detaling curve parameters and comparison statistics
+#'  columns (where possible) detailing curve parameters and comparison
+#'  statistics
 #'
 #' @references
 #'  Savitski M. M. \emph{et al.} Tracking cancer drugs in living cells by

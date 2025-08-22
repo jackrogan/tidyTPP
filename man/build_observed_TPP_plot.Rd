@@ -20,7 +20,7 @@ the columns:
 \describe{
 \item{Temp}{Experiment temperature in \eqn{\degree C}, will be used for the x
 axis values}
-\item{rel_quantity}{(or name specified with \code{quan_name}) Protein quantity
+\item{rel_quantity}{(or name specified with \code{quan_column}) Protein quantity
 measurement corresponding to \verb{Fraction non-denatured}, will be used for the
 y-axis values}
 }
