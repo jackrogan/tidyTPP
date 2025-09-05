@@ -94,7 +94,6 @@ build_observed_TPP_plot <- function(data,
     melt_plot <- melt_plot + ggplot2::scale_colour_discrete(guide = "none")
   }
   melt_plot <- melt_plot + ggplot2::theme_bw()
-
   # Facet separate proteins if specified (default yes)
   if(facets){
     melt_plot <-

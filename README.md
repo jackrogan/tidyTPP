@@ -51,7 +51,7 @@ Hit-finding
 
 - Identifying hits by $\Delta T_m$ p-value
 
-- Identifying its by *NPARC* F-score and p-value
+- Identifying hits by *NPARC* F-score and p-value
 
 Plotting
 
@@ -172,7 +172,7 @@ style="width:75.0%" />
 
 ## Example: Function detail
 
-This example will walk through the main functions using 2-protein
+This example will walk through the main functions using 4-protein
 example data
 
 ### Import
@@ -286,7 +286,7 @@ four_prot_normalised <-
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.69 s
+#> Total elapsed time: 0.66 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq
@@ -307,10 +307,10 @@ plot_melt(four_prot_normalised)
 #> # A tibble: 160 × 9
 #>    Condition Replicate  Temp Protein_ID Pep_N Match_N rel_quantity raw_quantity
 #>    <chr>     <chr>     <int> <chr>      <dbl>   <dbl>        <dbl>        <dbl>
-#>  1 Control   01           37 Protein_A     36      62        1.00      7913466.
-#>  2 Control   01           37 Protein_B     62     133        1.00    371610272 
-#>  3 Control   01           37 Protein_C     23      49        1.00     94161240 
-#>  4 Control   01           37 Protein_D      5       7        1.00      4286970.
+#>  1 Control   01           37 Protein_A     36      62        1.000     7913466.
+#>  2 Control   01           37 Protein_B     62     133        1.000   371610272 
+#>  3 Control   01           37 Protein_C     23      49        1.000    94161240 
+#>  4 Control   01           37 Protein_D      5       7        1.000     4286970.
 #>  5 Control   01           41 Protein_D      5       7        1.13      4460470.
 #>  6 Control   01           41 Protein_A     36      62        0.992     7238843 
 #>  7 Control   01           41 Protein_B     62     133        1.01    345026016 
@@ -358,10 +358,10 @@ All statistics are appended as new measurements to the *tibble*:
 ``` r
 # Full table
 four_prot_analysed
-#> # A tibble: 160 × 25
+#> # A tibble: 160 × 31
 #>    Protein_ID Condition Replicate  Temp Pep_N Match_N rel_quantity raw_quantity
 #>    <chr>      <chr>     <chr>     <int> <dbl>   <dbl>        <dbl>        <dbl>
-#>  1 Protein_A  Control   01           37    36      62       1.00       7913466.
+#>  1 Protein_A  Control   01           37    36      62       1.000      7913466.
 #>  2 Protein_A  Control   01           56    36      62       0.0580      362589.
 #>  3 Protein_A  Control   01           47    36      62       0.718      5454540.
 #>  4 Protein_A  Control   01           53    36      62       0.221      1542812.
@@ -372,9 +372,10 @@ four_prot_analysed
 #>  9 Protein_A  Control   01           67    36      62       0.0111       78023.
 #> 10 Protein_A  Control   01           59    36      62       0.0167      132594.
 #> # ℹ 150 more rows
-#> # ℹ 17 more variables: norm_coefficient <dbl>, F_scaled <dbl>,
+#> # ℹ 23 more variables: norm_coefficient <dbl>, F_scaled <dbl>,
 #> #   p_adj_NPARC <dbl>, a <dbl>, b <dbl>, plateau <dbl>, melt_point <dbl>,
-#> #   infl_point <dbl>, slope <dbl>, R_sq <dbl>, Comparison <chr>,
+#> #   infl_point <dbl>, slope <dbl>, R_sq <dbl>, RSS <dbl>, sigma <dbl>,
+#> #   n_coeffs <int>, n_obs <int>, log_lik <dbl>, AICc <dbl>, Comparison <chr>,
 #> #   diff_melt_point <dbl>, min_comparison_slope <dbl>, min_R_sq <dbl>,
 #> #   min_slope <dbl>, max_control_plateau <dbl>, adj_pvalue <dbl>
 

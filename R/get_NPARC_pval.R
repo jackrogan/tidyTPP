@@ -18,11 +18,14 @@
 #'    (\emph{FDR}).
 #'
 #' @inheritParams analyse_TPP
-#' @param fit_method Character. Method used to fit alternative and null
-#'  hypotheses. One of:
-#'  * `splines`: approximate curves using splines - faster completion.
 #' @param degrees_of_freedom Numeric. Range of degrees of freedom to use to
 #'  generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.
+#' @param alt_model A `data.frame` with model parameter data for the alternative
+#'  hypothesis. Must include experimental condition and replicate columns as
+#'  well as `a`, `b`, `plateau`, `melt_point`, `infl_point`, `slope`, `R_sq`,
+#'  `RSS`, `sigma`, `n_ceoffs`, `n_obs`, `log_lik`, and `AICc`.
+#'
+#'  See example output for [fit_melt_by_experiment]
 #' @param max_cores Integer. The maximum number of cores to parallelise the
 #'  spline fitting over, if less than the maximum number of cores available.
 #'  If `max_cores` is 1, then spline fitting will be run serially in
@@ -58,9 +61,10 @@
 #'                max_cores = 1,
 #'                to_plot = TRUE)
 get_NPARC_pval <- function(TPP_tbl,
-                           fit_method = "splines",
+                           NPARC_fit_method = "nls",
                            degrees_of_freedom = c(4:7),
-                           max_cores = 4,
+                           alt_model = NULL,
+                           max_cores = 8,
                            comparisons = NULL,
                            quantity_column = "quantity",
                            control_name = "Control",
@@ -74,7 +78,7 @@ get_NPARC_pval <- function(TPP_tbl,
   if(is.null(comparisons)){
     conds <- unique(TPP_tbl$Condition)
     reps <- unique(TPP_tbl$Replicate)
-    comparisons <- create_comparisons_tbl(conds, reps, "Control")
+    comparisons <- create_comparisons_tbl(conds, reps, control_name)
   }
 
   comparisons <- comparisons[c("Condition_01", "Condition_02")]
@@ -82,6 +86,7 @@ get_NPARC_pval <- function(TPP_tbl,
 
   # Loop over condition combinations
   NPARC_tbl <- NULL
+
   for(k in 1:nrow(comparisons)){
     condition_subset <-
       c(comparisons[[k, "Condition_01"]], comparisons[[k, "Condition_02"]])
@@ -91,87 +96,69 @@ get_NPARC_pval <- function(TPP_tbl,
     }
     NPARC_tbl_k <- TPP_tbl[TPP_tbl$Condition %in% condition_subset,]
 
-    if(is.numeric(degrees_of_freedom)){
-      # Get models per degree of freedom:
-      if(!silent) cat("Fitting alternative and null models\n")
-      time_total <- proc.time()
-
-      # Parallel:
-      if(max_cores > 1){
-        n_cores <-
-          min(parallel::detectCores(), max_cores, length(degrees_of_freedom))
-        if(!silent){
-          est_core_time <- nrow(TPP_tbl) * length(degrees_of_freedom) * 0.000113
-          est_time <- 0.21 * n_cores + est_core_time / n_cores
-          cat("Cores:", n_cores,
-              "\nEstimated process time: ", round(est_time, 2), "s\n")
-        }
-        cl <- parallel::makeCluster(n_cores)
-        parallel::clusterExport(cl, list(
-          "get_model_fit_stats",
-          "get_fit_details",
-          "get_natural_spline_lm"
-        ),
-        envir = environment())
-
-        all_df_splines <-
-          parallel::parLapply(cl,
-                              1:length(degrees_of_freedom),
-                              fit_hypothesis_splines,
-                              x_tbl = NPARC_tbl_k,
-                              d_f_total = degrees_of_freedom,
-                              silent = silent) |>
-          Reduce(rbind, x = _)
-
-        parallel::stopCluster(cl)
-
-        # Serially:
-      } else {
-        if(!silent){
-          # Time taken should be 0.00043 s / Protein row
-          est_time <- nrow(TPP_tbl) * length(degrees_of_freedom) * 0.000108
-          cat("Estimated process time: ", round(est_time , 2), "s\n")
-        }
-        all_df_splines <-
-          lapply(1:length(degrees_of_freedom),
-                 fit_hypothesis_splines,
-                 x = NPARC_tbl_k,
-                 d_f_total = degrees_of_freedom,
-                 silent = silent) |>
-          Reduce(rbind, x = _)
+    if(NPARC_fit_method == "splines"){
+      model_details_tbl <-
+        fit_splines_by_df(NPARC_tbl_k,
+                          degrees_of_freedom,
+                          max_cores = max_cores,
+                          silent = silent)
+    } else {
+      if(!silent & !NPARC_fit_method %in% c("nonlinear", "nls")) {
+        cat("Fit method not recognised - using non-linear model\n")
       }
-      time_out <- proc.time() - time_total
-      if(!silent) cat("Elapsed time:", time_out[["elapsed"]], "s\n")
 
-      if(any(all_df_splines$success & all_df_splines$hypothesis == "H-alt")){
+      NPARC_tbl_k <- mask_column(NPARC_tbl_k, "quantity", "rel_quantity")
 
-        # Select degrees of freedom that minimise AICc for each protein
-        # break ties with minimum complexity
-        best_model_splines <- all_df_splines[all_df_splines$success,]
-        best_model_splines <-
-          best_model_splines[all_df_splines$hypothesis == "H-alt",]
-        best_model_splines <-
-          best_model_splines[order(best_model_splines$Protein_ID,
-                                   best_model_splines$AICc,
-                                   best_model_splines$degrees_of_freedom),]
-        best_model_splines <-
-          best_model_splines[!duplicated(best_model_splines$Protein_ID),]
+      # Use already-calculated sigmoid curve fits for alternative hypothesis
+      if(!is.null(alt_model)) {
+        alt_details_tbl <- alt_model
+      } else {
+        alt_details_tbl <-
+          fit_melt_by_experiment(NPARC_tbl_k,
+                                 experiment_cols = c("Protein_ID", "Condition"),
+                                 silent = silent,
+                                 max_cores = max_cores)
+      }
 
-        # filter all spline tbl to best models
-        best_model_splines <-
-          best_model_splines[c('Protein_ID', 'degrees_of_freedom')]
-        best_model_splines <-
-          merge(best_model_splines, all_df_splines)
+      alt_details_tbl <- combine_model_fit_stats(alt_details_tbl)
 
-        # Reshape wide for comparisons
-        NPARC_tbl_k <-
-          stats::reshape(best_model_splines,
-                         direction = "wide",
-                         idvar = "Protein_ID",
-                         v.names = c("degrees_of_freedom", "RSS", "sigma",
-                                     "n_coeffs", "n_obs", "log_lik", "AICc",
-                                     "success"),
-                         timevar = "hypothesis")
+      alt_details_tbl$hypothesis <- "H-alt"
+      alt_details_tbl$AICc <- NA
+
+      alt_details_tbl <-
+        alt_details_tbl[c("Protein_ID", "RSS", "sigma", "n_coeffs", "n_obs",
+                          "log_lik", "AICc", "hypothesis")]
+
+      null_details_tbl <-
+        fit_melt_by_experiment(NPARC_tbl_k,
+                               experiment_cols = c("Protein_ID"),
+                               silent = silent,
+                               max_cores = max_cores)
+      null_details_tbl$hypothesis <- "H-null"
+
+      null_details_tbl <-
+        null_details_tbl[c("Protein_ID", "RSS", "sigma", "n_coeffs", "n_obs",
+                           "log_lik", "AICc", "hypothesis")]
+
+      model_details_tbl <-
+        as.data.frame(rbind(alt_details_tbl, null_details_tbl))
+      model_details_tbl$degrees_of_freedom <- NA
+      model_details_tbl$success <- TRUE
+    }
+
+    if(!is.null(model_details_tbl)){
+
+      # Reshape wide for comparisons
+      NPARC_tbl_k <-
+        stats::reshape(model_details_tbl,
+                       direction = "wide",
+                       idvar = "Protein_ID",
+                       v.names = c("degrees_of_freedom", "RSS", "sigma",
+                                   "n_coeffs", "n_obs", "log_lik", "AICc",
+                                   "success"),
+                       timevar = "hypothesis")
+
+      get_f_score_TPP <- function(NPARC_tbl_k){
 
         # Ordinary F-score - as Storey 2005:
         NPARC_tbl_k$F_score <-
@@ -188,6 +175,7 @@ get_NPARC_pval <- function(TPP_tbl,
         NPARC_tbl_k$`post_var.H-alt` <- squeezed_vars$var.post
         # Prior distribution degrees of freedom
         NPARC_tbl_k$`prior_df.H-alt` <- squeezed_vars$df.prior
+
         # Moderated F-score
         NPARC_tbl_k$F_score_mod <-
           (NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`) /
@@ -199,6 +187,7 @@ get_NPARC_pval <- function(TPP_tbl,
           NPARC_tbl_k$`n_obs.H-alt` - NPARC_tbl_k$`n_coeffs.H-alt`
         NPARC_tbl_k$denom_df_adj <-
           NPARC_tbl_k$denom_df + NPARC_tbl_k$`prior_df.H-alt`
+
         # Scaled F-score
         NPARC_tbl_k$F_scaled <- NPARC_tbl_k$F_score_mod / NPARC_tbl_k$num_df
         # P-value
@@ -242,38 +231,123 @@ get_NPARC_pval <- function(TPP_tbl,
         # Keep necessary columns
         NPARC_tbl_k$Condition  <-  condition_subset[1]
         NPARC_tbl_k <-
-          NPARC_tbl_k[c("Protein_ID", "Condition", "F_scaled", "p_adj_NPARC")]
+          NPARC_tbl_k[c("Protein_ID", "Condition", "num_df", "denom_df",
+                        "F_scaled", "p_adj_NPARC")]
+        colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition", "d1", "d2",
+                                   "F_scaled", "p_adj_NPARC")
+        NPARC_tbl_k
+      }
 
-      } else {
-        if(!silent) {
-          cat("No alternate hypothesis curves successfully fitted:",
-              "Try more appropriate degrees of freedom.\n")
-          NPARC_tbl_k <- NULL
+    get_f_score_NPARC <- function(NPARC_tbl_k){
+
+      # RSS Difference
+      NPARC_tbl_k$RSS.diff <- NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`
+      NPARC_tbl_k <- NPARC_tbl_k[!is.na(NPARC_tbl_k$RSS.diff),]
+      NPARC_tbl_k <- NPARC_tbl_k[NPARC_tbl_k$RSS.diff > 0,]
+      # Estimate degrees of freedom empirically:
+      # Estimate sigma0 squared with median and median absolute deviation
+      NPARC_tbl_k$sigma0_sq <-
+        0.5 *
+        mad(NPARC_tbl_k$RSS.diff, na.rm = TRUE)^2 /
+        median(NPARC_tbl_k$RSS.diff, na.rm = TRUE)
+
+      # Fit Chi2 estimate for degrees of freedom
+      NPARC_tbl_k$num_df <-
+        MASS::fitdistr(
+          x =  NPARC_tbl_k$RSS.diff/ NPARC_tbl_k$sigma0_sq,
+          densfun = "chi-squared",
+          start = list(df = 1),
+          method = "Brent",
+          lower = 0,
+          upper = nrow(NPARC_tbl_k)
+        )[["estimate"]]
+
+      NPARC_tbl_k$denom_df <-
+        MASS::fitdistr(
+          x =  NPARC_tbl_k$`RSS.H-alt`/ NPARC_tbl_k$sigma0_sq,
+          densfun = "chi-squared",
+          start = list(df = 1),
+          method = "Brent",
+          lower = 0,
+          upper = nrow(NPARC_tbl_k)
+        )[["estimate"]]
+
+      # NPARC_tbl_k$`RSS.H-null` <- NPARC_tbl_k$`RSS.H-null`/ NPARC_tbl_k$sigma0_sq
+      # NPARC_tbl_k$`RSS.H-alt` <- NPARC_tbl_k$`RSS.H-alt`/ NPARC_tbl_k$sigma0_sq
+      # NPARC_tbl_k$`RSS.diff` <- NPARC_tbl_k$`RSS.diff`/ NPARC_tbl_k$sigma0_sq
+
+      # Scaled F-statistic
+      NPARC_tbl_k$F_scaled <-
+        (NPARC_tbl_k$RSS.diff / (NPARC_tbl_k$num_df * NPARC_tbl_k$sigma0_sq)) /
+        (NPARC_tbl_k$`RSS.H-alt` / (NPARC_tbl_k$denom_df * NPARC_tbl_k$sigma0_sq))
+
+      # Adjusted p-value
+      NPARC_tbl_k$pvalue <-
+        1 - stats::pf(NPARC_tbl_k$F_scaled,
+                      df1 = NPARC_tbl_k$num_df,
+                      df2 = NPARC_tbl_k$denom_df)
+      NPARC_tbl_k$p_adj_NPARC <-  stats::p.adjust(NPARC_tbl_k$pvalue, "BH")
+
+      if(!is.null(to_save) | to_plot){
+        title_k <- paste(condition_subset, collapse = " vs ")
+        f_plot_k <- build_f_density_plot(NPARC_tbl_k, title_k)
+        p_plot_k <- build_p_hist_plot(NPARC_tbl_k, title_k)
+
+        if(to_plot) {
+          suppressWarnings(suppressMessages(plot(f_plot_k)))
+          suppressWarnings(suppressMessages(plot(p_plot_k)))
+        }
+        if(!is.null(to_save)) {
+          save_k <-
+            sub("(.*)(\\.[^\\.]+)$",
+                paste0("\\1_", condition_subset[1],
+                       "_", condition_subset[2], "_F_score\\2"),
+                to_save)
+          suppressWarnings(
+            suppressMessages(ggplot2::ggsave(save_k, f_plot_k)))
+          save_k <-
+            sub("(.*)(\\.[^\\.]+)$",
+                paste0("\\1_", condition_subset[1],
+                       "_", condition_subset[2], "_p_value\\2"),
+                to_save)
+          suppressWarnings(suppressMessages(
+            ggplot2::ggsave(save_k, p_plot_k)))
         }
       }
-    } else {
-      if(!silent) {
-        cat("Cannot calculate NPARC scores: degrees of freedom not numeric.\n")
-        NPARC_tbl_k <- NULL
-      }
+      # Keep necessary columns
+      NPARC_tbl_k$Condition  <-  condition_subset[1]
+      NPARC_tbl_k <-
+        NPARC_tbl_k[c("Protein_ID", "Condition", "RSS.diff", "RSS.H-alt",
+                      "RSS.H-null", "sigma0_sq", "num_df", "denom_df",
+                      "F_scaled", "p_adj_NPARC")]
+      colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition", "RSS_diff",
+                                 "RSS_H_alt", "RSS_H_null", "sigma0_sq", "d1", "d2",
+                                 "F_scaled", "p_adj_NPARC")
+
+      NPARC_tbl_k
     }
 
+    # NPARC_tbl_k_TPP <- get_f_score_TPP(NPARC_tbl_k)
+    # NPARC_tbl_k_NPARC <- get_f_score_NPARC(NPARC_tbl_k)
+    #
+    # NPARC_tbl_k <- merge(NPARC_tbl_k_TPP, NPARC_tbl_k_NPARC)
+
+    NPARC_tbl_k <- get_f_score_NPARC(NPARC_tbl_k)
     NPARC_tbl <- rbind(NPARC_tbl, NPARC_tbl_k)
+    }
   }
-
-  NPARC <- mask_column(NPARC_tbl, "quantity", quantity_column)
-  tibble::as_tibble(NPARC_tbl)
+  if(!is.null(NPARC_tbl)){
+    NPARC_tbl <- mask_column(NPARC_tbl, "quantity", quantity_column)
+    tibble::as_tibble(NPARC_tbl)
+  }
 }
-
-
-
 
 # Plot F-score density distribution
 #' @importFrom rlang .data
 build_f_density_plot <- function(f_tbl, f_title = NULL){
   f_tbl$facet_label <-
-    paste0("df1 = ", f_tbl$num_df,
-           "; df2 = ", f_tbl$denom_df)
+    paste0("df1 = ", signif(f_tbl$num_df, 3),
+           "; df2 = ", signif(f_tbl$denom_df, 3))
 
   f_score_plot <-
     ggplot2::ggplot(f_tbl, ggplot2::aes(x = .data$F_scaled)) +

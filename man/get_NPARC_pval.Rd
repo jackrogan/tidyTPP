@@ -8,6 +8,7 @@ get_NPARC_pval(
   TPP_tbl,
   fit_method = "splines",
   degrees_of_freedom = c(4:7),
+  alt_model = NULL,
   max_cores = 4,
   comparisons = NULL,
   quantity_column = "quantity",
@@ -35,10 +36,18 @@ assumed.}
 hypotheses. One of:
 \itemize{
 \item \code{splines}: approximate curves using splines - faster completion.
+\item \code{nonlinear} or \code{nls}: fit nonlinear sigmoid curves.
 }}
 
 \item{degrees_of_freedom}{Numeric. Range of degrees of freedom to use to
 generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.}
+
+\item{alt_model}{A \code{data.frame} with model parameter data for the alternative
+hypothesis. Must include experimental condition and replicate columns as
+well as \code{a}, \code{b}, \code{plateau}, \code{melt_point}, \code{infl_point}, \code{slope}, \code{R_sq},
+\code{RSS}, \code{sigma}, \code{n_ceoffs}, \code{n_obs}, \code{log_lik}, and \code{AICc}.
+
+See example output for \link{fit_melt_by_experiment}}
 
 \item{max_cores}{Integer. The maximum number of cores to parallelise the
 spline fitting over, if less than the maximum number of cores available.

@@ -144,7 +144,6 @@ normalise_TPP <- function(TPP_tbl,
     sapply(normP_list, length) |>
     which.max()
   normP <- normP_list[[which_subset]]
-
   if(!silent) cat("\nnormP contains", length(normP), "Proteins.\n")
 
   # 5. Get Median fold-changes for each Temp, Condition, Replicate normP subset

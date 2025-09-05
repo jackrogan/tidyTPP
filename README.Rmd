@@ -68,7 +68,7 @@ Hit-finding
 
 * Identifying hits by $\Delta T_m$ p-value
 
-* Identifying its by *NPARC* F-score and p-value
+* Identifying hits by *NPARC* F-score and p-value
 
 Plotting
 
@@ -181,7 +181,7 @@ TPP_hits
 
 ## Example: Function detail
 
-This example will walk through the main functions using 2-protein example data
+This example will walk through the main functions using 4-protein example data
 
 ### Import
 

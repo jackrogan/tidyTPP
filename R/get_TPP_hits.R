@@ -130,6 +130,7 @@ get_TPP_hits <- function(
     ...
 ){
   TPP_hits <- TPP_data
+
   if(!"Replicate" %in% colnames(TPP_hits)) TPP_hits$Replicate <- "01"
 
   if(inherits(hit_criteria, "character") &
@@ -201,6 +202,7 @@ get_TPP_hits <- function(
                                   min_abs = \(x) min(abs(x))),
                     stat_column = stat_columns_present,
                     experiment_cols = c("Protein_ID", "Condition"))
+
 
   if(length(hit_criteria) > 0){
 

@@ -1,5 +1,6 @@
 # Function to loop over all degrees of freedom and fit splines
-fit_splines_by_df <- function(TPP_subtbl){
+fit_splines_by_df <-
+  function(TPP_subtbl, degrees_of_freedom, max_cores, silent = FALSE){
   if(is.numeric(degrees_of_freedom)){
     # Get models per degree of freedom:
     if(!silent) cat("Fitting alternative and null models\n")

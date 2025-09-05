@@ -59,6 +59,10 @@
 #'  * p-values are adjusted by applying the
 #'    Benjamini-Hochberg procedure to control the false discovery rate
 #'    (\emph{FDR}).
+#'  @param NPARC_fit_method Character. Method used to fit alternative and null
+#'  hypotheses for NPARC analysis. One of:
+#'  * `splines`: approximate curves using splines - faster completion.
+#'  * `nonlinear` or `nls`: fit nonlinear sigmoid curves.
 #'
 #' @param to_plot Boolean. If true, will generate distribution plots of
 #'  F-statistic and p-value on calculating \emph{NPARC} statistics
@@ -114,6 +118,7 @@ analyse_TPP <-
            quantity_column = "rel_quantity",
            control_name = "Control",
            p_value_methods = c("melting_point", "NPARC"),
+           NPARC_fit_method = "nls",
            silent = FALSE,
            to_plot = FALSE,
            to_save = NULL,
@@ -197,6 +202,7 @@ analyse_TPP <-
                       add_args = list(TPP_tbl = TPP_tbl,
                                       comparisons = comparisons,
                                       control_name = control_name,
+                                      NPARC_fit_method = NPARC_fit_method,
                                       to_plot = to_plot,
                                       to_save = to_save,
                                       silent = silent),
@@ -249,7 +255,8 @@ find_melting_point_diffs <- function(fit_tbl, comparisons){
     stats::reshape(direction = "wide", idvar = "comparison", timevar = "order",
                    v.names = c("Condition", "Replicate", "melt_point", "slope"))
 
-  if("Condition.2" %in% colnames(comparison_tbl)){
+  if("Condition.2" %in% colnames(comparison_tbl) &
+     "Condition.1" %in% colnames(comparison_tbl)){
     comparison_tbl$comparison <-
       paste(comparison_tbl$Condition.1, comparison_tbl$Replicate.1, "vs",
             comparison_tbl$Condition.2, comparison_tbl$Replicate.2, sep = "_")
@@ -266,6 +273,9 @@ find_melting_point_diffs <- function(fit_tbl, comparisons){
     comparison_tbl <- merge(fit_tbl, comparison_tbl, all.x = TRUE)
   } else {
     comparison_tbl <- fit_tbl
+    comparison_tbl$Comparison <- NA
+    comparison_tbl$diff_melt_point <- NA
+    comparison_tbl$min_comparison_slope <- NA
   }
   tibble::as_tibble(comparison_tbl)
 }
