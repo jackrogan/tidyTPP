@@ -107,7 +107,7 @@ get_model_fit_stats <- function(sp_fit){
 # Function to combine stats for each protein
 combine_model_fit_stats <- function(fit_details){
   agg_fit_details <-
-   aggregate(cbind(RSS, n_coeffs, n_obs) ~ Protein_ID,
+   stats::aggregate(cbind(RSS, n_coeffs, n_obs) ~ Protein_ID,
              data = fit_details,
              FUN = sum)
 

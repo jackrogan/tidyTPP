@@ -1,7 +1,7 @@
 #' Analyse TPP-TR Data
 #'
 #' @description
-#' `analyse_TPP()` transforms \emph{Thermal Protein Profiling} (TPP) relative
+#'  `analyse_TPP()` transforms \emph{Thermal Protein Profiling} (TPP) relative
 #'  intensity data, fitting sigmoidal melting curves to the presumably
 #'  normalised data, generating curve parameters - including melting points,
 #'  then calculating statistical parameters - optionally including melting-point
@@ -59,7 +59,7 @@
 #'  * p-values are adjusted by applying the
 #'    Benjamini-Hochberg procedure to control the false discovery rate
 #'    (\emph{FDR}).
-#'  @param NPARC_fit_method Character. Method used to fit alternative and null
+#' @param NPARC_fit_method Character. Method used to fit alternative and null
 #'  hypotheses for NPARC analysis. One of:
 #'  * `splines`: approximate curves using splines - faster completion.
 #'  * `nonlinear` or `nls`: fit nonlinear sigmoid curves.
@@ -151,6 +151,10 @@ analyse_TPP <-
     comparisons <- create_comparisons_tbl(conds, reps, control_name)
   }
 
+  # Remove any conditions tested against themselves
+  comparisons <-
+    comparisons[comparisons$Condition_01 != comparisons$Condition_02,]
+
   if(!silent){
     cat("\nComparisons:\n")
     print(comparisons)
@@ -216,6 +220,12 @@ analyse_TPP <-
   full_tbl <- merge(TPP_tbl, fit_tbl,
                     by = c("Protein_ID", "Condition", "Replicate"),
                     all.x = TRUE)
+  full_tbl <- full_tbl[colnames(full_tbl) %in%
+                         c("Protein_ID", "Condition", "Replicate", "F_scaled",
+                         "p_adj_NPARC", "a", "b", "melt_point", "infl_point",
+                         "slope", "plateau", "R_sq", "Comparison",
+                         "diff_melt_point", "min_slope", "min_comparison_slope",
+                         "min_R_sq", "max_control_plateau", "adj_pvalue")]
 
   if(!silent) cat("\nAnalysed.\n--------------------\n")
 

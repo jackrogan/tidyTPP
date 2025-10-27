@@ -1,27 +1,26 @@
+x <- normalise_TPP(quan_data_20prot, silent = TRUE)
+
 test_that("NPARC pvalue is as expected", {
-  x <- quan_data_4prot
-  y <- analysis_data_4prot
   NPARC_x <-
     get_NPARC_pval(x,
                    max_cores = 1,
                    quantity_column = "rel_quantity",
+                   all_stats = TRUE,
                    silent = TRUE)
-  expect_equal(signif(NPARC_x[[1,4]], 5), 0.0000078601)
+  expect_equal(signif(NPARC_x[[3,9]], 3), 0.0211)
 })
 
 test_that("NPARC with no quantity behaves as expected",{
-  x <- quan_data_4prot[1:6]
   NPARC_x <-
-    get_NPARC_pval(x,
+    get_NPARC_pval(x[1:6],
                    max_cores = 1,
                    quantity_column = "rel_quantity",
                    silent = TRUE)
-  expect_equal(as.data.frame(NPARC_x), x)
+  expect_equal(NPARC_x, x[1:6])
 })
 
 test_that("NPARC distribution plots save appropriately",{
   plot_temp <- tempfile(fileext = ".png")
-  x <- quan_data_4prot
   expect_no_error(
     get_NPARC_pval(x,
                    max_cores = 1,

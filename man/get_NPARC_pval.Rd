@@ -6,13 +6,14 @@
 \usage{
 get_NPARC_pval(
   TPP_tbl,
-  fit_method = "splines",
+  NPARC_fit_method = "nls",
   degrees_of_freedom = c(4:7),
   alt_model = NULL,
-  max_cores = 4,
+  max_cores = 8,
   comparisons = NULL,
   quantity_column = "quantity",
   control_name = "Control",
+  all_stats = FALSE,
   to_plot = FALSE,
   to_save = NULL,
   silent = FALSE
@@ -32,8 +33,8 @@ thermal protein profiling (TPP) experiment. This must contain the columns:
 If replicates are not given, a single replicate per condition will be
 assumed.}
 
-\item{fit_method}{Character. Method used to fit alternative and null
-hypotheses. One of:
+\item{NPARC_fit_method}{Character. Method used to fit alternative and null
+hypotheses for NPARC analysis. One of:
 \itemize{
 \item \code{splines}: approximate curves using splines - faster completion.
 \item \code{nonlinear} or \code{nls}: fit nonlinear sigmoid curves.
@@ -74,6 +75,9 @@ protein quantity values in \code{TPP_tbl}}
 \item{control_name}{Character. Character string that matches the control
 experiment in \code{TPP_tbl$Condition}}
 
+\item{all_stats}{Boolean. If true, report RSS for \eqn{H_{alt}},
+\eqn{H_{null}}, and degrees of freedom with output.}
+
 \item{to_plot}{Boolean. If true, will generate distribution plots of
 F-statistic and p-value on calculating \emph{NPARC} statistics}
 
@@ -107,7 +111,7 @@ Benjamini-Hochberg procedure to control the false discovery rate
 }
 \examples{
 # Minimal data - two-protein melt curve
-x <- quan_data_4prot
+x <- quan_data_20prot
 norm_x <- normalise_TPP(x)
 
 # NPARC F-score and p-value generation
