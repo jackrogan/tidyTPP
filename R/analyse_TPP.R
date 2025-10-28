@@ -151,10 +151,6 @@ analyse_TPP <-
     comparisons <- create_comparisons_tbl(conds, reps, control_name)
   }
 
-  # Remove any conditions tested against themselves
-  comparisons <-
-    comparisons[comparisons$Condition_01 != comparisons$Condition_02,]
-
   if(!silent){
     cat("\nComparisons:\n")
     print(comparisons)

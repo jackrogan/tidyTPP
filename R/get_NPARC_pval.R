@@ -79,6 +79,9 @@ get_NPARC_pval <- function(TPP_tbl,
 
   # Check that quantity is given
   if(!"quantity" %in% colnames(TPP_tbl)){
+    if(!silent) {
+      cat("\nNo protein quantity column found, could not calculate F-scores\n")
+    }
     NPARC_tbl <- NULL
 
   } else {
@@ -91,7 +94,9 @@ get_NPARC_pval <- function(TPP_tbl,
 
     comparisons <- comparisons[c("Condition_01", "Condition_02")]
     comparisons <- unique(comparisons)
-    print(comparisons)
+    # Remove any conditions tested against themselves
+    comparisons <-
+      comparisons[comparisons$Condition_01 != comparisons$Condition_02,]
 
     # Loop over condition combinations
     NPARC_tbl <- NULL
@@ -168,184 +173,55 @@ get_NPARC_pval <- function(TPP_tbl,
                                      "success"),
                          timevar = "hypothesis")
 
-        get_f_score_TPP <- function(NPARC_tbl_k){
-
-          # Ordinary F-score - as Storey 2005:
-          NPARC_tbl_k$F_score <-
-            (NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`) /
-            NPARC_tbl_k$`RSS.H-alt`
-
-          # Moderate/rescale F-score and p-value:
-          # Residual degrees of freedom
-          NPARC_tbl_k$`resid_df.H-alt` <-
-            NPARC_tbl_k$`n_obs.H-alt` - NPARC_tbl_k$`n_coeffs.H-alt`
-          # Posterior variances - using limma squeezeVar
-          squeezed_vars <- limma::squeezeVar(NPARC_tbl_k$`sigma.H-alt`^2,
-                                             NPARC_tbl_k$`resid_df.H-alt`)
-          NPARC_tbl_k$`post_var.H-alt` <- squeezed_vars$var.post
-          # Prior distribution degrees of freedom
-          NPARC_tbl_k$`prior_df.H-alt` <- squeezed_vars$df.prior
-
-          # Moderated F-score
-          NPARC_tbl_k$F_score_mod <-
-            (NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`) /
-            NPARC_tbl_k$`post_var.H-alt`
-          # Degrees of freedom for scaling
-          NPARC_tbl_k$num_df <-
-            NPARC_tbl_k$`n_coeffs.H-alt` - NPARC_tbl_k$`n_coeffs.H-null`
-          NPARC_tbl_k$denom_df <-
-            NPARC_tbl_k$`n_obs.H-alt` - NPARC_tbl_k$`n_coeffs.H-alt`
-          NPARC_tbl_k$denom_df_adj <-
-            NPARC_tbl_k$denom_df + NPARC_tbl_k$`prior_df.H-alt`
-
-          # Scaled F-score
-          NPARC_tbl_k$F_scaled <- NPARC_tbl_k$F_score_mod / NPARC_tbl_k$num_df
-          # P-value
-          NPARC_tbl_k$p_NPARC <-
-            stats::pf(NPARC_tbl_k$F_scaled,
-                      df1 = NPARC_tbl_k$num_df,
-                      df2 = NPARC_tbl_k$denom_df_adj,
-                      lower.tail = FALSE)
-
-          # Adjust p-value.
-          NPARC_tbl_k$p_adj_NPARC <-
-            stats::p.adjust(NPARC_tbl_k$p_NPARC, method = "fdr")
-
-          if(!is.null(to_save) | to_plot){
-            title_k <- paste(condition_subset, collapse = " vs ")
-            f_plot_k <- build_f_density_plot(NPARC_tbl_k, title_k)
-            p_plot_k <- build_p_hist_plot(NPARC_tbl_k, title_k)
-
-            if(to_plot) {
-              suppressWarnings(suppressMessages(plot(f_plot_k)))
-              suppressWarnings(suppressMessages(plot(p_plot_k)))
-            }
-            if(!is.null(to_save)) {
-              save_k <-
-                sub("(.*)(\\.[^\\.]+)$",
-                    paste0("\\1_", condition_subset[1],
-                           "_", condition_subset[2], "_F_score\\2"),
-                    to_save)
-              suppressWarnings(
-                suppressMessages(ggplot2::ggsave(save_k, f_plot_k)))
-              save_k <-
-                sub("(.*)(\\.[^\\.]+)$",
-                    paste0("\\1_", condition_subset[1],
-                           "_", condition_subset[2], "_p_value\\2"),
-                    to_save)
-              suppressWarnings(suppressMessages(
-                ggplot2::ggsave(save_k, p_plot_k)))
-            }
-          }
-
-          # Keep necessary columns
-          NPARC_tbl_k$Condition  <-  condition_subset[1]
-          NPARC_tbl_k <-
-            NPARC_tbl_k[c("Protein_ID", "Condition", "num_df", "denom_df",
-                          "F_scaled", "p_adj_NPARC")]
-          colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition", "d1", "d2",
-                                     "F_scaled", "p_adj_NPARC")
-          NPARC_tbl_k
-        }
-
-        get_f_score_NPARC <- function(NPARC_tbl_k){
-
-          # RSS Difference
-          NPARC_tbl_k$RSS.diff <- NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`
-          NPARC_tbl_k <- NPARC_tbl_k[!is.na(NPARC_tbl_k$RSS.diff),]
-          NPARC_tbl_k <- NPARC_tbl_k[NPARC_tbl_k$RSS.diff > 0,]
-          # Estimate degrees of freedom empirically:
-          # Estimate sigma0 squared with median and median absolute deviation
-          NPARC_tbl_k$sigma0_sq <-
-            0.5 *
-            stats::mad(NPARC_tbl_k$RSS.diff, na.rm = TRUE)^2 /
-            stats::median(NPARC_tbl_k$RSS.diff, na.rm = TRUE)
-
-          # Fit Chi2 estimate for degrees of freedom
-          NPARC_tbl_k$num_df <-
-            MASS::fitdistr(
-              x =  NPARC_tbl_k$RSS.diff/ NPARC_tbl_k$sigma0_sq,
-              densfun = "chi-squared",
-              start = list(df = 1),
-              method = "Brent",
-              lower = 0,
-              upper = nrow(NPARC_tbl_k)
-            )[["estimate"]]
-
-          NPARC_tbl_k$denom_df <-
-            MASS::fitdistr(
-              x =  NPARC_tbl_k$`RSS.H-alt`/ NPARC_tbl_k$sigma0_sq,
-              densfun = "chi-squared",
-              start = list(df = 1),
-              method = "Brent",
-              lower = 0,
-              upper = nrow(NPARC_tbl_k)
-            )[["estimate"]]
-
-          # NPARC_tbl_k$`RSS.H-null` <- NPARC_tbl_k$`RSS.H-null`/ NPARC_tbl_k$sigma0_sq
-          # NPARC_tbl_k$`RSS.H-alt` <- NPARC_tbl_k$`RSS.H-alt`/ NPARC_tbl_k$sigma0_sq
-          # NPARC_tbl_k$`RSS.diff` <- NPARC_tbl_k$`RSS.diff`/ NPARC_tbl_k$sigma0_sq
-
-          # Scaled F-statistic
-          NPARC_tbl_k$F_scaled <-
-            (NPARC_tbl_k$RSS.diff / (NPARC_tbl_k$num_df * NPARC_tbl_k$sigma0_sq)) /
-            (NPARC_tbl_k$`RSS.H-alt` / (NPARC_tbl_k$denom_df * NPARC_tbl_k$sigma0_sq))
-
-          # Adjusted p-value
-          NPARC_tbl_k$pvalue <-
-            1 - stats::pf(NPARC_tbl_k$F_scaled,
-                          df1 = NPARC_tbl_k$num_df,
-                          df2 = NPARC_tbl_k$denom_df)
-          NPARC_tbl_k$p_adj_NPARC <-  stats::p.adjust(NPARC_tbl_k$pvalue, "BH")
-
-          if(!is.null(to_save) | to_plot){
-            title_k <- paste(condition_subset, collapse = " vs ")
-            f_plot_k <- build_f_density_plot(NPARC_tbl_k, title_k)
-            p_plot_k <- build_p_hist_plot(NPARC_tbl_k, title_k)
-
-            if(to_plot) {
-              suppressWarnings(suppressMessages(plot(f_plot_k)))
-              suppressWarnings(suppressMessages(plot(p_plot_k)))
-            }
-            if(!is.null(to_save)) {
-              save_k <-
-                sub("(.*)(\\.[^\\.]+)$",
-                    paste0("\\1_", condition_subset[1],
-                           "_", condition_subset[2], "_F_score\\2"),
-                    to_save)
-              suppressWarnings(
-                suppressMessages(ggplot2::ggsave(save_k, f_plot_k)))
-              save_k <-
-                sub("(.*)(\\.[^\\.]+)$",
-                    paste0("\\1_", condition_subset[1],
-                           "_", condition_subset[2], "_p_value\\2"),
-                    to_save)
-              suppressWarnings(suppressMessages(
-                ggplot2::ggsave(save_k, p_plot_k)))
-            }
-          }
-          # Keep necessary columns
-          NPARC_tbl_k$Condition  <-  condition_subset[1]
-          if(all_stats){
-            NPARC_tbl_k <-
-              NPARC_tbl_k[c("Protein_ID", "Condition", "RSS.diff", "RSS.H-alt",
-                            "RSS.H-null", "num_df", "denom_df",
-                            "F_scaled", "p_adj_NPARC")]
-            colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition", "RSS_diff",
-                                       "RSS_H_alt", "RSS_H_null", "d1", "d2",
-                                       "F_scaled", "p_adj_NPARC")
-          } else {
-            NPARC_tbl_k <-
-              NPARC_tbl_k[c("Protein_ID", "Condition",
-                            "F_scaled", "p_adj_NPARC")]
-            colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition",
-                                       "F_scaled", "p_adj_NPARC")
-          }
-
-          NPARC_tbl_k
-        }
-
+        # Get F-Scores and p-values from models
         NPARC_tbl_k <- get_f_score_NPARC(NPARC_tbl_k)
+
+        # Plot F-scorea nd p-values if required
+        if(!is.null(to_save) | to_plot){
+          title_k <- paste(condition_subset, collapse = " vs ")
+          f_plot_k <- build_f_density_plot(NPARC_tbl_k, title_k)
+          p_plot_k <- build_p_hist_plot(NPARC_tbl_k, title_k)
+
+          if(to_plot) {
+            suppressWarnings(suppressMessages(plot(f_plot_k)))
+            suppressWarnings(suppressMessages(plot(p_plot_k)))
+          }
+          if(!is.null(to_save)) {
+            save_k <-
+              sub("(.*)(\\.[^\\.]+)$",
+                  paste0("\\1_", condition_subset[1],
+                         "_", condition_subset[2], "_F_score\\2"),
+                  to_save)
+            suppressWarnings(
+              suppressMessages(ggplot2::ggsave(save_k, f_plot_k)))
+            save_k <-
+              sub("(.*)(\\.[^\\.]+)$",
+                  paste0("\\1_", condition_subset[1],
+                         "_", condition_subset[2], "_p_value\\2"),
+                  to_save)
+            suppressWarnings(suppressMessages(
+              ggplot2::ggsave(save_k, p_plot_k)))
+          }
+        }
+
+        # Keep necessary columns
+        NPARC_tbl_k$Condition  <-  condition_subset[1]
+        if(all_stats){
+          NPARC_tbl_k <-
+            NPARC_tbl_k[c("Protein_ID", "Condition", "RSS.diff", "RSS.H-alt",
+                          "RSS.H-null", "num_df", "denom_df",
+                          "F_scaled", "p_adj_NPARC")]
+          colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition", "RSS_diff",
+                                     "RSS_H_alt", "RSS_H_null", "d1", "d2",
+                                     "F_scaled", "p_adj_NPARC")
+        } else {
+          NPARC_tbl_k <-
+            NPARC_tbl_k[c("Protein_ID", "Condition",
+                          "F_scaled", "p_adj_NPARC")]
+          colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition",
+                                     "F_scaled", "p_adj_NPARC")
+        }
+
         NPARC_tbl <- rbind(NPARC_tbl, NPARC_tbl_k)
       }
     }
@@ -358,6 +234,59 @@ get_NPARC_pval <- function(TPP_tbl,
     TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
     TPP_tbl
   }
+}
+
+get_f_score_NPARC <- function(NPARC_tbl_k){
+
+  # RSS Difference
+  NPARC_tbl_k$RSS.diff <- NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`
+  NPARC_tbl_k <- NPARC_tbl_k[!is.na(NPARC_tbl_k$RSS.diff),]
+  NPARC_tbl_k <- NPARC_tbl_k[NPARC_tbl_k$RSS.diff > 0,]
+  # Estimate degrees of freedom empirically:
+  # Estimate sigma0 squared with median and median absolute deviation
+  NPARC_tbl_k$sigma0_sq <-
+    0.5 *
+    stats::mad(NPARC_tbl_k$RSS.diff, na.rm = TRUE)^2 /
+    stats::median(NPARC_tbl_k$RSS.diff, na.rm = TRUE)
+
+  # Fit Chi2 estimate for degrees of freedom
+  NPARC_tbl_k$num_df <-
+    MASS::fitdistr(
+      x =  NPARC_tbl_k$RSS.diff/ NPARC_tbl_k$sigma0_sq,
+      densfun = "chi-squared",
+      start = list(df = 1),
+      method = "Brent",
+      lower = 0,
+      upper = nrow(NPARC_tbl_k)
+    )[["estimate"]]
+
+  NPARC_tbl_k$denom_df <-
+    MASS::fitdistr(
+      x =  NPARC_tbl_k$`RSS.H-alt`/ NPARC_tbl_k$sigma0_sq,
+      densfun = "chi-squared",
+      start = list(df = 1),
+      method = "Brent",
+      lower = 0,
+      upper = nrow(NPARC_tbl_k)
+    )[["estimate"]]
+
+  # NPARC_tbl_k$`RSS.H-null` <- NPARC_tbl_k$`RSS.H-null`/ NPARC_tbl_k$sigma0_sq
+  # NPARC_tbl_k$`RSS.H-alt` <- NPARC_tbl_k$`RSS.H-alt`/ NPARC_tbl_k$sigma0_sq
+  # NPARC_tbl_k$`RSS.diff` <- NPARC_tbl_k$`RSS.diff`/ NPARC_tbl_k$sigma0_sq
+
+  # Scaled F-statistic
+  NPARC_tbl_k$F_scaled <-
+    (NPARC_tbl_k$RSS.diff / (NPARC_tbl_k$num_df * NPARC_tbl_k$sigma0_sq)) /
+    (NPARC_tbl_k$`RSS.H-alt` / (NPARC_tbl_k$denom_df * NPARC_tbl_k$sigma0_sq))
+
+  # Adjusted p-value
+  NPARC_tbl_k$pvalue <-
+    1 - stats::pf(NPARC_tbl_k$F_scaled,
+                  df1 = NPARC_tbl_k$num_df,
+                  df2 = NPARC_tbl_k$denom_df)
+  NPARC_tbl_k$p_adj_NPARC <-  stats::p.adjust(NPARC_tbl_k$pvalue, "BH")
+
+  NPARC_tbl_k
 }
 
 # Plot F-score density distribution

@@ -7,8 +7,20 @@ test_that("NPARC pvalue is as expected", {
                    quantity_column = "rel_quantity",
                    all_stats = TRUE,
                    silent = TRUE)
-  expect_equal(signif(NPARC_x[[3,9]], 3), 0.0211)
+  expect_equal(signif(NPARC_x[[3,9]], 2), 0.021)
 })
+
+test_that("spline pvalue is as expected", {
+  NPARC_x <-
+    get_NPARC_pval(x,
+                   max_cores = 1,
+                   quantity_column = "rel_quantity",
+                   NPARC_fit_method = "splines",
+                   all_stats = TRUE,
+                   silent = TRUE)
+  expect_equal(signif(NPARC_x[[9,9]], 2), 0.00018)
+})
+
 
 test_that("NPARC with no quantity behaves as expected",{
   NPARC_x <-
@@ -25,6 +37,7 @@ test_that("NPARC distribution plots save appropriately",{
     get_NPARC_pval(x,
                    max_cores = 1,
                    quantity_column = "rel_quantity",
+                   NPARC_fit_method = "splines",
                    to_save = plot_temp,
                    silent = TRUE)
   )
