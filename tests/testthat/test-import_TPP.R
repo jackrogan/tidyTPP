@@ -42,5 +42,5 @@ test_that("Custom import is chosen correctly", {
 })
 
 test_that("Unrecognized format is handled correctly", {
-  expect_null(import_TPP("x", "y", import_format = "no_format", silent = TRUE))
+  expect_null(import_TPP("x", "y", import_format = "no_format", silent = FALSE))
 })

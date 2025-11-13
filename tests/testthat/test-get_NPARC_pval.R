@@ -17,7 +17,7 @@ test_that("spline pvalue is as expected", {
                    quantity_column = "rel_quantity",
                    NPARC_fit_method = "splines",
                    all_stats = TRUE,
-                   silent = TRUE)
+                   silent = FALSE)
   expect_equal(signif(NPARC_x[[9,10]], 2), 0.00018)
 })
 
