@@ -59,10 +59,6 @@
 #'  * p-values are adjusted by applying the
 #'    Benjamini-Hochberg procedure to control the false discovery rate
 #'    (\emph{FDR}).
-#' @param NPARC_fit_method Character. Method used to fit alternative and null
-#'  hypotheses for NPARC analysis. One of:
-#'  * `splines`: approximate curves using splines - faster completion.
-#'  * `nonlinear` or `nls`: fit nonlinear sigmoid curves.
 #'
 #' @param to_plot Boolean. If true, will generate distribution plots of
 #'  F-statistic and p-value on calculating \emph{NPARC} statistics
@@ -118,7 +114,6 @@ analyse_TPP <-
            quantity_column = "rel_quantity",
            control_name = "Control",
            p_value_methods = c("melting_point", "NPARC"),
-           NPARC_fit_method = "nls",
            silent = FALSE,
            to_plot = FALSE,
            to_save = NULL,
@@ -137,6 +132,8 @@ analyse_TPP <-
   # Get curve fits
   fit_tbl <-
     fit_melt_by_experiment(TPP_tbl, y_column = "quantity", silent = silent, ...)
+
+  print(fit_tbl)
 
   if(!silent){
     cat("--------------------\n")
@@ -202,7 +199,6 @@ analyse_TPP <-
                       add_args = list(TPP_tbl = TPP_tbl,
                                       comparisons = comparisons,
                                       control_name = control_name,
-                                      NPARC_fit_method = NPARC_fit_method,
                                       to_plot = to_plot,
                                       to_save = to_save,
                                       silent = silent),
@@ -216,12 +212,14 @@ analyse_TPP <-
   full_tbl <- merge(TPP_tbl, fit_tbl,
                     by = c("Protein_ID", "Condition", "Replicate"),
                     all.x = TRUE)
-  full_tbl <- full_tbl[colnames(full_tbl) %in%
-                         c("Protein_ID", "Condition", "Replicate", "F_scaled",
-                         "p_adj_NPARC", "a", "b", "melt_point", "infl_point",
-                         "slope", "plateau", "R_sq", "Comparison",
-                         "diff_melt_point", "min_slope", "min_comparison_slope",
-                         "min_R_sq", "max_control_plateau", "adj_pvalue")]
+  full_tbl <-
+    full_tbl[colnames(full_tbl) %in%
+               c(colnames(TPP_tbl),
+                 "Protein_ID", "Condition", "Replicate", "Temp",
+                 "F_scaled", "p_adj_NPARC", "a", "b", "melt_point",
+                 "infl_point", "slope", "plateau", "R_sq", "Comparison",
+                 "diff_melt_point", "min_slope", "min_comparison_slope",
+                 "min_R_sq", "max_control_plateau", "adj_pvalue")]
 
   if(!silent) cat("\nAnalysed.\n--------------------\n")
 

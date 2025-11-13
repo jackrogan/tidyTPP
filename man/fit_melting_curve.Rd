@@ -12,6 +12,7 @@ fit_melting_curve(
   protein_total = NULL,
   silent = FALSE,
   show_errors = FALSE,
+  curve_fit_method = c("nls", "nls.multstart"),
   ...
 )
 }
@@ -41,11 +42,16 @@ the progress bar if necessary, ignored if silent = \code{TRUE}
 \item{show_errors}{Boolean. If \code{TRUE}, errors in calling \code{\link[=nls_multstart]{nls_multstart()}}
 will be shown in console output}
 
-\item{...}{Further arguments to be passed to \code{\link[=nls_multstart]{nls_multstart()}}}
+\item{curve_fit_method}{Character. Method for sigmoid curve fitting -
+either \emph{"nls"} for a repeated \code{\link[=nls]{nls()}} approach (default) or
+\emph{"nls.multstart"} for \code{\link[=nls_multstart]{nls_multstart()}}.}
+
+\item{...}{Further arguments to be passed to \code{\link[=nls]{nls()}} or \code{\link[=nls_multstart]{nls_multstart()}}}
 }
 \value{
-A \code{tibble} with 1 row and 7 variables:
+A \code{tibble} with 1 row and 13 variables:
 \itemize{
+\item ID columns from \code{experiment_cols}
 \item \code{a}: Parameter \code{a} from fitted sigmoidal curve.
 \item \code{b}: Parameter \code{b} from fitted sigmoidal curve.
 \item \code{plateau}: Plateau from fitted sigmoidal curve.
@@ -55,6 +61,12 @@ protein is destabilised
 second derivative \eqn{f''(T) = 0}
 \item \code{slope}: Sigmoidal curve slope, \emph{i.e.} \eqn{f'(T_{infl})}
 \item \code{R_sq}: \eqn{R^2} for the fitted sigmoidal curve
+\item \code{RSS}: Residual sum of squares (\emph{RSS})
+\item \code{sigma}: Residual standard deviation (\eqn{\sigma})
+\item \code{n_coeffs}: Number of coefficients fitted
+\item \code{n_obs}: Number of observations in curve
+\item \code{log_lik}: log-likelihood (\eqn{\ell})
+\item \code{AICc}: Corrected Akaike information criterion (\emph{AICc})
 }
 }
 \description{
@@ -62,7 +74,19 @@ second derivative \eqn{f''(T) = 0}
 melting point curve, given by:
 \deqn{  f(T)=\frac{1-plateau}{1+e^{-(\frac{a}{T}-b)}}+plateau }
 
-Curve fitting uses \link{nls_multstart} to estimate a series of starting
+Curve fitting iterates calls to \link{nls} until the starting parameters result in
+convergence to a least-squares estimate for best fit.
+Arguments given to \code{nls()} by default are:
+\itemize{
+\item \code{start = c(pl = 0, a = 550, b = 10)}
+\item \code{lower = c(pl = 0, a = 0.00001, b = 0.00001)}
+\item \code{upper = c(pl = 1.5, a = 15000, b = 250)}
+\item \code{na.action = na.omit}
+\item \code{algorithm = "port"}
+\item \verb{control = nls.control(maxiter=50))}
+}
+
+Alternatively, \link{nls_multstart} can be used to estimate a series of starting
 parameters for the non-linear model using a gridstart approach.
 Arguments given to \code{nls_multstart()} by default are:
 \itemize{

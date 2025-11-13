@@ -7,7 +7,7 @@ test_that("NPARC pvalue is as expected", {
                    quantity_column = "rel_quantity",
                    all_stats = TRUE,
                    silent = TRUE)
-  expect_equal(signif(NPARC_x[[3,9]], 2), 0.021)
+  expect_equal(signif(NPARC_x[[3,10]], 2), 0.0012)
 })
 
 test_that("spline pvalue is as expected", {
@@ -18,7 +18,7 @@ test_that("spline pvalue is as expected", {
                    NPARC_fit_method = "splines",
                    all_stats = TRUE,
                    silent = TRUE)
-  expect_equal(signif(NPARC_x[[9,9]], 2), 0.00018)
+  expect_equal(signif(NPARC_x[[9,10]], 2), 0.00018)
 })
 
 

@@ -35,7 +35,7 @@ a single process}
 \code{\link[=nls_multstart]{nls_multstart()}}}
 }
 \value{
-A \code{tibble} with 1 row and \emph{7 + n} variables (where
+A \code{tibble} with 1 row and \emph{13 + n} variables (where
 \emph{n} is the length of \code{experiment_cols}):
 \itemize{
 \item ID columns from \code{experiment_cols}
@@ -48,6 +48,12 @@ protein is destabilised
 second derivative \eqn{f''(T) = 0}
 \item \code{slope}: Sigmoidal curve slope, \emph{i.e.} \eqn{f'(T_{infl})}
 \item \code{R_sq}: \eqn{R^2} for the fitted sigmoidal curve
+\item \code{RSS}: Residual sum of squares (\emph{RSS})
+\item \code{sigma}: Residual standard deviation (\eqn{\sigma})
+\item \code{n_coeffs}: Number of coefficients fitted
+\item \code{n_obs}: Number of observations in curve
+\item \code{log_lik}: log-likelihood (\eqn{\ell})
+\item \code{AICc}: Corrected Akaike information criterion (\emph{AICc})
 }
 }
 \description{

@@ -109,7 +109,9 @@ combine_model_fit_stats <- function(fit_details){
   agg_fit_details <-
    stats::aggregate(cbind(RSS, n_coeffs, n_obs) ~ Protein_ID,
              data = fit_details,
-             FUN = sum)
+             FUN = sum,
+             na.action = NULL,
+             na.rm = TRUE)
 
   agg_fit_details$sigma <- sqrt(agg_fit_details$RSS/agg_fit_details$n_obs)
   agg_fit_details$log_lik <-

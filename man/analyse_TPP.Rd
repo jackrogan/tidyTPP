@@ -10,7 +10,6 @@ analyse_TPP(
   quantity_column = "rel_quantity",
   control_name = "Control",
   p_value_methods = c("melting_point", "NPARC"),
-  NPARC_fit_method = "nls",
   silent = FALSE,
   to_plot = FALSE,
   to_save = NULL,
@@ -88,13 +87,6 @@ of freedom for for each protein and condition comparison.
 \item p-values are adjusted by applying the
 Benjamini-Hochberg procedure to control the false discovery rate
 (\emph{FDR}).
-}}
-
-\item{NPARC_fit_method}{Character. Method used to fit alternative and null
-hypotheses for NPARC analysis. One of:
-\itemize{
-\item \code{splines}: approximate curves using splines - faster completion.
-\item \code{nonlinear} or \code{nls}: fit nonlinear sigmoid curves.
 }}
 
 \item{silent}{Boolean. If \code{TRUE}, no console output is shown}

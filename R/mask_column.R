@@ -1,7 +1,6 @@
 # Function to mask column names
 mask_column <- function(x, old_name, new_name){
-  if(old_name != new_name){
-
+  if(old_name != new_name & old_name %in% colnames(x)){
     # Temporary name if mask already exists
     if(new_name %in% colnames(x)) {
       colnames(x)[colnames(x) == new_name] <- paste0(new_name, "_renamed")

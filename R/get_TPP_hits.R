@@ -278,11 +278,12 @@ get_TPP_hits <- function(
         "mean_control_melt_point", "mean_diff_melt_point",
         "mean_control_diff_melt_point")[c(TRUE, TRUE, TRUE, which_stat_cols)]
 
-
-
     # Get top n hits in order of F-score
     if("F_scaled" %in% colnames(TPP_hits)){
       TPP_hits <- TPP_hits[order(TPP_hits$F_scaled, decreasing = TRUE),]
+    # Or NPARC p-value
+    } else if("p_adj_NPARC" %in% colnames(TPP_hits)) {
+      TPP_hits <- TPP_hits[order(TPP_hits$p_adj_NPARC),]
     # Or melting-point p-value
     } else if("max_adj_pvalue"%in% colnames(TPP_hits)) {
       TPP_hits <- TPP_hits[order(TPP_hits$max_adj_pvalue),]

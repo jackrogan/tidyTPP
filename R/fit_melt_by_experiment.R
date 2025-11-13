@@ -19,7 +19,7 @@
 #' @param ... Further arguments to be passed to [fit_melting_curve()] and
 #' [nls_multstart()]
 #'
-#' @return A `tibble` with 1 row and \emph{7 + n} variables (where
+#' @return A `tibble` with 1 row and \emph{13 + n} variables (where
 #' \emph{n} is the length of `experiment_cols`):
 #' * ID columns from `experiment_cols`
 #' * `a`: Parameter `a` from fitted sigmoidal curve.
@@ -31,6 +31,12 @@
 #'    second derivative \eqn{f''(T) = 0}
 #' * `slope`: Sigmoidal curve slope, \emph{i.e.} \eqn{f'(T_{infl})}
 #' * `R_sq`: \eqn{R^2} for the fitted sigmoidal curve
+#' * `RSS`: Residual sum of squares (\emph{RSS})
+#' * `sigma`: Residual standard deviation (\eqn{\sigma})
+#' * `n_coeffs`: Number of coefficients fitted
+#' * `n_obs`: Number of observations in curve
+#' * `log_lik`: log-likelihood (\eqn{\ell})
+#' * `AICc`: Corrected Akaike information criterion (\emph{AICc})
 #' @export
 #'
 #' @examples
@@ -97,11 +103,12 @@ fit_melt_by_experiment <-
       # Per operation assume 0.2 s
       if(!silent) {
         cat("Running on", n_cores, "cores.\nEstimated total process time:",
-            round(0.65 + total * 0.23 / n_cores, 2), "s\n")
+            round(12.32 + total * 0.046 / n_cores, 2), "s\n")
       }
       cl <- parallel::makeCluster(n_cores)
       parallel::clusterExport(cl, list(
         "fit_melting_curve",
+        "repeat_nls",
         "get_model_fit_stats",
         "get_sigmoid_TPPTR_formula",
         "get_sigmoid_formula_root",
@@ -121,12 +128,13 @@ fit_melt_by_experiment <-
     # Run serially
     } else {
       if(!silent) {
-        cat("Estimated total process time:", round(total*0.23, 2), "s\n")
+        cat("Estimated total process time:", round(total*0.56, 2), "s\n")
       }
 
       params <-
         lapply(1:length(data_sep), fit_curve_x) |>
         Reduce(rbind, x = _)
+
     }
     if(!silent) cat(nrow(params), "of", total, "fitted successfully.\n")
 

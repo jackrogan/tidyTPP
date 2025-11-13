@@ -5,7 +5,17 @@
 #' melting point curve, given by:
 #' \deqn{  f(T)=\frac{1-plateau}{1+e^{-(\frac{a}{T}-b)}}+plateau }
 #'
-#' Curve fitting uses [nls_multstart] to estimate a series of starting
+#' Curve fitting iterates calls to [nls] until the starting parameters result in
+#' convergence to a least-squares estimate for best fit.
+#' Arguments given to `nls()` by default are:
+#' * `start = c(pl = 0, a = 550, b = 10)`
+#' * `lower = c(pl = 0, a = 0.00001, b = 0.00001)`
+#' * `upper = c(pl = 1.5, a = 15000, b = 250)`
+#' * `na.action = na.omit`
+#' * `algorithm = "port"`
+#' * `control = nls.control(maxiter=50))`
+#'
+#' Alternatively, [nls_multstart] can be used to estimate a series of starting
 #' parameters for the non-linear model using a gridstart approach.
 #' Arguments given to `nls_multstart()` by default are:
 #' * `iter = c(5,5,5)`
@@ -36,9 +46,13 @@
 #' @param silent Boolean. If `TRUE`, no console output is shown
 #' @param show_errors Boolean. If `TRUE`, errors in calling [nls_multstart()]
 #'  will be shown in console output
-#' @param ... Further arguments to be passed to [nls_multstart()]
+#' @param curve_fit_method Character. Method for sigmoid curve fitting -
+#'  either \emph{"nls"} for a repeated [nls()] approach (default) or
+#'  \emph{"nls.multstart"} for [nls_multstart()].
+#' @param ... Further arguments to be passed to [nls()] or [nls_multstart()]
 #'
-#' @return A `tibble` with 1 row and 7 variables:
+#' @return A `tibble` with 1 row and 13 variables:
+#' * ID columns from `experiment_cols`
 #' * `a`: Parameter `a` from fitted sigmoidal curve.
 #' * `b`: Parameter `b` from fitted sigmoidal curve.
 #' * `plateau`: Plateau from fitted sigmoidal curve.
@@ -48,6 +62,12 @@
 #'    second derivative \eqn{f''(T) = 0}
 #' * `slope`: Sigmoidal curve slope, \emph{i.e.} \eqn{f'(T_{infl})}
 #' * `R_sq`: \eqn{R^2} for the fitted sigmoidal curve
+#' * `RSS`: Residual sum of squares (\emph{RSS})
+#' * `sigma`: Residual standard deviation (\eqn{\sigma})
+#' * `n_coeffs`: Number of coefficients fitted
+#' * `n_obs`: Number of observations in curve
+#' * `log_lik`: log-likelihood (\eqn{\ell})
+#' * `AICc`: Corrected Akaike information criterion (\emph{AICc})
 #'
 #' @references
 #'  Schellman J. A., The thermodynamics of solvent exchange
@@ -82,40 +102,69 @@ fit_melting_curve <- function(data,
                               protein_total = NULL,
                               silent = FALSE,
                               show_errors = FALSE,
+                              curve_fit_method = c("nls", "nls.multstart"),
                               ...){
+
   if(any(is.null(protein_num), is.null(protein_total))) silent <- TRUE
 
   pre_model_data <- data.frame(x = data[[x_column]], y = data[[y_column]])
 
-  # Allow dots to override default arguments for nls
-  nls_dots <- list(...)
-  nls_defaults <- list("formula" = get_sigmoid_TPPTR_formula(0),
-                       "iter" = c(5,5,5),
-                       "data" = pre_model_data,
-                       "start_lower" = c(pl = -0.5, a = 0.00001, b = 0.00001),
-                       "start_upper" = c(pl = 1.5, a = 5000, b = 250),
-                       "lower" = c(pl = -0.5, a = 0.00001, b = 0.00001),
-                       "supp_errors" = "Y")
-  nls_args <- list()
-  for(i in 1:length(nls_defaults)){
-    if(!names(nls_defaults)[i] %in% names(nls_dots)) {
-      nls_args <- c(nls_args, nls_defaults[i])
-    }
-  }
-  nls_args <- c(nls_args, nls_dots)
+  if("nls" %in% curve_fit_method){
 
-  # Fit with nls.multstart
-  fit <-
-    try(
-      do.call(nls.multstart::nls_multstart, nls_args),
-      silent = show_errors
-    )
+    # Allow dots to override default arguments for nls
+    nls_dots <- list(...)
+    nls_defaults <- list("formula" = get_sigmoid_TPPTR_formula(0),
+                         "data" = pre_model_data,
+                         "start" = c(pl = 0, a = 550, b = 10),
+                         "max_attempts" = 100,
+                         "lower" = c(pl = 0, a = 0.00001, b = 0.00001),
+                         "upper" = c(pl = 1.5, a = 15000, b = 250),
+                         "na.action" = na.omit,
+                         "algorithm" = "port",
+                         "control" = nls.control(maxiter=50))
+    nls_args <-
+      nls_defaults[sapply(names(nls_defaults), \(x) !x %in% names(nls_dots))]
+    nls_args <- c(nls_args, nls_dots)
+    nls_args <- nls_args[names(nls_args) %in% names(formals(nls))]
+    # Use try and repeat
+
+    fit <- do.call(repeat_nls, nls_args)
+  } else if("nls.multstart" %in% curve_fit_method){
+    # Allow dots to override default arguments for nls.multstart
+    nls_dots <- list(...)
+    nls_defaults <- list("formula" = get_sigmoid_TPPTR_formula(0),
+                         "iter" = c(5,5,5),
+                         "data" = pre_model_data,
+                         "start_lower" = c(pl = -0.5, a = 0.00001, b = 0.00001),
+                         "start_upper" = c(pl = 1.5, a = 15000, b = 250),
+                         "lower" = c(pl = -0.5, a = 0.00001, b = 0.00001),
+                         "supp_errors" = "Y")
+    nls_args <-
+      nls_defaults[sapply(names(nls_defaults), \(x) !x %in% names(nls_dots))]
+    nls_args <- c(nls_args, nls_dots)
+    nls_args <-
+      nls_args[
+        names(nls_args) %in% names(formals(nls.multstart::nls_multstart))]
+
+    # Fit with nls.multstart
+    fit <-
+      try(
+        do.call(nls.multstart::nls_multstart, nls_args),
+        silent = !show_errors
+      )
+
+  } else {
+    if(!silent) cat("\nNo curve fit method selected - cannot fit.")
+    return(NULL)
+  }
+
   if(inherits(fit, "try-error")){
     if(!silent){
       if(protein_num == protein_total) cat("\n")
     }
     return(NULL)
   }
+
 
   if(!silent) {
     progress = floor(10 * protein_num / protein_total)
@@ -125,4 +174,24 @@ fit_melting_curve <- function(data,
   }
 
   tibble::tibble(get_model_fit_stats(fit))
+}
+
+# Function to attempt nls fit and repeat
+repeat_nls <- function(start = c(pl = 0, a = 550, b = 10),
+                       max_attempts = 100,
+                       show_errors = FALSE,
+                       ...){
+
+  i <- 0
+  repeat_fit <- TRUE
+
+  while (repeat_fit){
+    mod_start <- start * (1 + runif(1, -0.5, 0.5))
+    fit <-
+      try(do.call(nls, list("start" = mod_start, ...)), silent = !show_errors)
+    i <- i + 1
+    repeat_fit <- inherits(fit, "try-error") & i < max_attempts
+  }
+
+  fit
 }

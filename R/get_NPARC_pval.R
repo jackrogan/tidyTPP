@@ -18,8 +18,13 @@
 #'    (\emph{FDR}).
 #'
 #' @inheritParams analyse_TPP
-#' @param degrees_of_freedom Numeric. Range of degrees of freedom to use to
-#'  generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.
+#' @param NPARC_fit_method Character. Method used to fit alternative and null
+#'  hypotheses for NPARC analysis. One of:
+#'  * `splines`: approximate curves using splines - faster completion.
+#'  * `nonlinear` or `nls`: fit nonlinear sigmoid curves.
+#' @param degrees_of_freedom Numeric. Fitting using "splines" only: range of
+#'  degrees of freedom to use to generate possible \eqn{H_{null}} and
+#'  \eqn{H_{alt}} curves.
 #' @param all_stats Boolean. If true, report RSS for \eqn{H_{alt}},
 #'  \eqn{H_{null}}, and degrees of freedom with output.
 #' @param alt_model A `data.frame` with model parameter data for the alternative
@@ -29,8 +34,8 @@
 #'
 #'  See example output for [fit_melt_by_experiment]
 #' @param max_cores Integer. The maximum number of cores to parallelise the
-#'  spline fitting over, if less than the maximum number of cores available.
-#'  If `max_cores` is 1, then spline fitting will be run serially in
+#'  curve fitting over, if less than the maximum number of cores available.
+#'  If `max_cores` is 1, then curve fitting will be run serially in
 #'  a single process
 #'
 #' @return A `tibble`, with the columns `Protein_ID`, `Condition`, `F-scaled`,
@@ -116,50 +121,20 @@ get_NPARC_pval <- function(TPP_tbl,
                             degrees_of_freedom,
                             max_cores = max_cores,
                             silent = silent)
+
       } else {
         if(!silent & !NPARC_fit_method %in% c("nonlinear", "nls")) {
           cat("Fit method not recognised - using non-linear model\n")
         }
 
-        NPARC_tbl_k <- mask_column(NPARC_tbl_k, "quantity", "rel_quantity")
-
-        # Use already-calculated sigmoid curve fits for alternative hypothesis
-        if(!is.null(alt_model)) {
-          alt_details_tbl <- alt_model
-        } else {
-          alt_details_tbl <-
-            fit_melt_by_experiment(NPARC_tbl_k,
-                                   experiment_cols = c("Protein_ID", "Condition"),
-                                   silent = silent,
-                                   max_cores = max_cores)
-        }
-
-        alt_details_tbl <- combine_model_fit_stats(alt_details_tbl)
-
-        alt_details_tbl$hypothesis <- "H-alt"
-        alt_details_tbl$AICc <- NA
-
-        alt_details_tbl <-
-          alt_details_tbl[c("Protein_ID", "RSS", "sigma", "n_coeffs", "n_obs",
-                            "log_lik", "AICc", "hypothesis")]
-
-        null_details_tbl <-
-          fit_melt_by_experiment(NPARC_tbl_k,
-                                 experiment_cols = c("Protein_ID"),
-                                 silent = silent,
-                                 max_cores = max_cores)
-
-        null_details_tbl$hypothesis <- "H-null"
-
-        null_details_tbl <-
-          null_details_tbl[c("Protein_ID", "RSS", "sigma", "n_coeffs", "n_obs",
-                             "log_lik", "AICc", "hypothesis")]
-
         model_details_tbl <-
-          as.data.frame(rbind(alt_details_tbl, null_details_tbl))
-        model_details_tbl$degrees_of_freedom <- NA
-        model_details_tbl$success <- TRUE
+        fit_melt_by_hypothesis(NPARC_tbl_k,
+                               alt_model = alt_model,
+                               max_cores = max_cores,
+                               silent = silent)
       }
+
+
 
       if(!is.null(model_details_tbl)){
 
@@ -210,10 +185,10 @@ get_NPARC_pval <- function(TPP_tbl,
           NPARC_tbl_k <-
             NPARC_tbl_k[c("Protein_ID", "Condition", "RSS.diff", "RSS.H-alt",
                           "RSS.H-null", "num_df", "denom_df",
-                          "F_scaled", "p_adj_NPARC")]
+                          "sigma0_sq", "F_scaled", "p_adj_NPARC")]
           colnames(NPARC_tbl_k) <- c("Protein_ID", "Condition", "RSS_diff",
                                      "RSS_H_alt", "RSS_H_null", "d1", "d2",
-                                     "F_scaled", "p_adj_NPARC")
+                                     "sigma0_sq", "F_scaled", "p_adj_NPARC")
         } else {
           NPARC_tbl_k <-
             NPARC_tbl_k[c("Protein_ID", "Condition",
@@ -236,12 +211,14 @@ get_NPARC_pval <- function(TPP_tbl,
   }
 }
 
+# Function to generate scaled f-score and adjusted p-value
 get_f_score_NPARC <- function(NPARC_tbl_k){
 
   # RSS Difference
   NPARC_tbl_k$RSS.diff <- NPARC_tbl_k$`RSS.H-null` - NPARC_tbl_k$`RSS.H-alt`
   NPARC_tbl_k <- NPARC_tbl_k[!is.na(NPARC_tbl_k$RSS.diff),]
   NPARC_tbl_k <- NPARC_tbl_k[NPARC_tbl_k$RSS.diff > 0,]
+
   # Estimate degrees of freedom empirically:
   # Estimate sigma0 squared with median and median absolute deviation
   NPARC_tbl_k$sigma0_sq <-
@@ -287,6 +264,54 @@ get_f_score_NPARC <- function(NPARC_tbl_k){
   NPARC_tbl_k$p_adj_NPARC <-  stats::p.adjust(NPARC_tbl_k$pvalue, "BH")
 
   NPARC_tbl_k
+}
+
+# Function to model curves using nls_multstart
+fit_melt_by_hypothesis <- function(quan_tbl,
+                                   alt_model = NULL,
+                                   max_cores = 8,
+                                   silent = FALSE) {
+
+  quan_tbl <- mask_column(quan_tbl, "quantity", "rel_quantity")
+
+  # Use already-calculated sigmoid curve fits for alternative hypothesis
+  if(!is.null(alt_model)) {
+    alt_details_tbl <- alt_model
+  } else {
+    alt_details_tbl <-
+      fit_melt_by_experiment(quan_tbl,
+                             experiment_cols = c("Protein_ID", "Condition"),
+                             silent = silent,
+                             max_cores = max_cores)
+  }
+
+  alt_details_tbl <- combine_model_fit_stats(alt_details_tbl)
+
+  alt_details_tbl$hypothesis <- "H-alt"
+  alt_details_tbl$AICc <- NA
+
+  alt_details_tbl <-
+    alt_details_tbl[c("Protein_ID", "RSS", "sigma", "n_coeffs", "n_obs",
+                      "log_lik", "AICc", "hypothesis")]
+
+  null_details_tbl <-
+    fit_melt_by_experiment(quan_tbl,
+                           experiment_cols = c("Protein_ID"),
+                           silent = silent,
+                           max_cores = max_cores)
+
+  null_details_tbl$hypothesis <- "H-null"
+
+  null_details_tbl <-
+    null_details_tbl[c("Protein_ID", "RSS", "sigma", "n_coeffs", "n_obs",
+                       "log_lik", "AICc", "hypothesis")]
+
+  model_details_tbl <-
+    as.data.frame(rbind(alt_details_tbl, null_details_tbl))
+  model_details_tbl$degrees_of_freedom <- NA
+  model_details_tbl$success <- TRUE
+
+  model_details_tbl
 }
 
 # Plot F-score density distribution
