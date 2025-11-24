@@ -138,17 +138,17 @@ and defines maximum parallel cores to use for these operations.
 - Default *4*.
 
 ``` r
-# Pipeline example: 4-protein test data
+# Pipeline example: 20-protein test data
 library(tidyTPP)
 
-four_prot_report <-
-    system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
+twenty_prot_report <-
+    system.file("extdata", "20_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
-    system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
+    system.file("extdata", "20_protein_config.csv", package = "tidyTPP")
 
 # Apply pipeline
 TPP_hits <- 
-  apply_TPP_pipeline(datafile = four_prot_report,
+  apply_TPP_pipeline(datafile = twenty_prot_report,
                     config = experiment_config,
                     import_format = "spectronaut",
                     to_plot = TRUE,
@@ -159,20 +159,21 @@ Result:
 
 ``` r
 TPP_hits
-#> # A tibble: 1 × 10
+#> # A tibble: 2 × 10
 #>   Protein_ID Condition Comparison         F_scaled p_adj_NPARC max_adj_pvalue
 #>   <chr>      <chr>     <chr>                 <dbl>       <dbl>          <dbl>
-#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.604
+#> 1 Protein_I  Treated   Treated_vs_Control     23.2   0.0000901      0.0000141
+#> 2 Protein_C  Treated   Treated_vs_Control     14.1   0.00118        0.0981   
 #> # ℹ 4 more variables: mean_melt_point <dbl>, mean_control_melt_point <dbl>,
 #> #   mean_diff_melt_point <dbl>, mean_control_diff_melt_point <dbl>
 ```
 
 <img src="man/figures/README-apply_pipeline-4.png"
-style="width:75.0%" />
+style="width:100.0%" />
 
 ## Example: Function detail
 
-This example will walk through the main functions using 4-protein
+This example will walk through the main functions using 20-protein
 example data
 
 ### Import
@@ -182,11 +183,11 @@ program-specific format, and a configuration file, defining conditions,
 replicates and temperatures, in the format shown.
 
 ``` r
-# 4-protein example data
-four_prot_report <-
-    system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
+# 20-protein example data
+twenty_prot_report <-
+    system.file("extdata", "20_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
-    system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
+    system.file("extdata", "20_protein_config.csv", package = "tidyTPP")
 experiment_dir <- system.file("extdata", package = "tidyTPP")
   
 # Config file contents
@@ -204,52 +205,52 @@ read.csv(experiment_config)[1:10,]
 #> 10         10   Control         1   67
 
 # Import using spectronaut import format
-four_prot_quan_data <- 
-  import_spectronaut(datafile = "4_protein_peptide_report.csv",
-                     config = "4_protein_config.csv",
+twenty_prot_quan_data <- 
+  import_spectronaut(datafile = "20_protein_peptide_report.csv",
+                     config = "20_protein_config.csv",
                      path = experiment_dir)
 #> 
 #> --------------------
 #> TPP Data Import
 #> --------------------
 #> Read in:
-#> 4_protein_peptide_report.csv 
-#> 4_protein_config.csv 
+#> 20_protein_peptide_report.csv 
+#> 20_protein_config.csv 
 #> --------------------
 #> Pivoting to long table...
 #> Transforming experiment names...
 #> Matching to experiment config data...
 #> Finding relative quantity values...
 #> Data imported.
-#> Found 4 proteins.
+#> Found 20 proteins.
 #> --------------------
 
 # Resulting tibble
-four_prot_quan_data
-#> # A tibble: 160 × 8
+twenty_prot_quan_data
+#> # A tibble: 800 × 8
 #>    Protein_ID Pep_N Match_N Condition Replicate  Temp rel_quantity raw_quantity
 #>    <chr>      <dbl>   <dbl> <chr>     <chr>     <int>        <dbl>        <dbl>
-#>  1 Protein_A     36      62 Control   01           37      1           7913466.
-#>  2 Protein_A     36      62 Control   01           41      0.915       7238843 
-#>  3 Protein_A     36      62 Control   01           44      0.895       7083090 
-#>  4 Protein_A     36      62 Control   01           47      0.689       5454540.
-#>  5 Protein_A     36      62 Control   01           50      0.416       3291901 
-#>  6 Protein_A     36      62 Control   01           53      0.195       1542812.
-#>  7 Protein_A     36      62 Control   01           56      0.0458       362589.
-#>  8 Protein_A     36      62 Control   01           59      0.0168       132594.
-#>  9 Protein_A     36      62 Control   01           63      0.0258       204328.
-#> 10 Protein_A     36      62 Control   01           67      0.00986       78023.
-#> # ℹ 150 more rows
+#>  1 Protein_A     29      42 Control   01           37       1          1401047.
+#>  2 Protein_A     29      42 Control   01           41       1.05       1464157.
+#>  3 Protein_A     29      42 Control   01           44       1.06       1485400.
+#>  4 Protein_A     29      42 Control   01           47       1.12       1568061.
+#>  5 Protein_A     29      42 Control   01           50       1.35       1889459 
+#>  6 Protein_A     29      42 Control   01           53       1.29       1801219.
+#>  7 Protein_A     29      42 Control   01           56       0.450       630379.
+#>  8 Protein_A     29      42 Control   01           59       0.116       162054.
+#>  9 Protein_A     29      42 Control   01           63       0.0945      132437.
+#> 10 Protein_A     29      42 Control   01           67       0.166       232101.
+#> # ℹ 790 more rows
 ```
 
 Data at this stage can be plotted to directly observe relative but *not
 yet normalised* protein curves.
 
 ``` r
-plot_melt(four_prot_quan_data)
+plot_melt(twenty_prot_quan_data)
 ```
 
-<img src="man/figures/README-example_import_plot-1.png" width="75%" />
+<img src="man/figures/README-example_import_plot-1.png" width="100%" />
 
 ### Normalisation
 
@@ -258,9 +259,9 @@ normalising against fitted median melting curves, as described by
 Savitsky *et al.* 2014.<sup>[1](#ref-Savitski_2014)</sup>
 
 ``` r
-# Normalise four-protein data, with visualisation
-four_prot_normalised <- 
-  normalise_TPP(TPP_tbl = four_prot_quan_data,
+# Normalise twenty-protein data, with visualisation
+twenty_prot_normalised <- 
+  normalise_TPP(TPP_tbl = twenty_prot_quan_data,
                 to_plot = TRUE)
 #> --------------------
 #> TPP Normalisation
@@ -269,7 +270,7 @@ four_prot_normalised <-
 #>     col lower upper
 #> 1 Pep_N     2   Inf
 #> 
-#> jointP contains 4 Proteins.
+#> jointP contains 20 Proteins.
 #> 
 #> normP criteria:
 #>   Temp lower upper
@@ -277,52 +278,52 @@ four_prot_normalised <-
 #> 2   63  -Inf   0.3
 #> 3   67  -Inf   0.2
 #> 
-#> normP contains 2 Proteins.
+#> normP contains 6 Proteins.
 #> --------------------
 #> Fit melting curve to normP medians:
 #> 
 #> Fitting 4 protein curves...
-#> Estimated total process time: 0.92 s
+#> Estimated total process time: 2.24 s
 #> |==        | 1 of 4|=====     | 2 of 4|=======   | 3 of 4|==========| 4 of 4
 #> 4 of 4 fitted successfully.
 #> 
-#> Total elapsed time: 0.66 s
+#> Total elapsed time: 0.03 s
 #> 
 #> Best fitted normP median curve:
 #>   Condition Replicate  R_sq
-#> 1   Control        02 0.998
+#> 1   Control        01 0.995
 #> --------------------
-#> 4 proteins normalised
+#> 20 proteins normalised
 #> --------------------
 ```
 
 <img src="man/figures/README-example_normalisation-1.png"
-style="width:75.0%" />
+style="width:100.0%" />
 
 Resulting in the normalised data:
 
 ``` r
 # Plotted melting data points
-plot_melt(four_prot_normalised)
-#> # A tibble: 160 × 9
+plot_melt(twenty_prot_normalised)
+#> # A tibble: 800 × 9
 #>    Condition Replicate  Temp Protein_ID Pep_N Match_N rel_quantity raw_quantity
 #>    <chr>     <chr>     <int> <chr>      <dbl>   <dbl>        <dbl>        <dbl>
-#>  1 Control   01           37 Protein_A     36      62        1.000     7913466.
-#>  2 Control   01           37 Protein_B     62     133        1.000   371610272 
-#>  3 Control   01           37 Protein_C     23      49        1.000    94161240 
-#>  4 Control   01           37 Protein_D      5       7        1.000     4286970.
-#>  5 Control   01           41 Protein_D      5       7        1.13      4460470.
-#>  6 Control   01           41 Protein_A     36      62        0.992     7238843 
-#>  7 Control   01           41 Protein_B     62     133        1.01    345026016 
-#>  8 Control   01           41 Protein_C     23      49        0.871    75621648 
-#>  9 Control   01           44 Protein_D      5       7        1.14      4613956.
-#> 10 Control   01           44 Protein_C     23      49        0.861    76666176 
-#> # ℹ 150 more rows
+#>  1 Control   01           37 Protein_A     29      42            1     1401047.
+#>  2 Control   01           37 Protein_B     23      39            1    18637136 
+#>  3 Control   01           37 Protein_C     36      62            1     7913466.
+#>  4 Control   01           37 Protein_D     76     108            1     1695097.
+#>  5 Control   01           37 Protein_T     19      29            1     5209475 
+#>  6 Control   01           37 Protein_Q     14      17            1     2789951.
+#>  7 Control   01           37 Protein_N     19      35            1      997140.
+#>  8 Control   01           37 Protein_K     13      15            1     6945545 
+#>  9 Control   01           37 Protein_H     14      26            1     2126099 
+#> 10 Control   01           37 Protein_E     10      12            1      351740.
+#> # ℹ 790 more rows
 #> # ℹ 1 more variable: norm_coefficient <dbl>
 ```
 
 <img src="man/figures/README-example_normalisation_plot-1.png"
-style="width:75.0%" />
+style="width:100.0%" />
 
 ### Analysis
 
@@ -341,47 +342,52 @@ optionally calculated from the data:
 Default behaviour is to apply both analyses:
 
 ``` r
-# Analyse four-protein data
-four_prot_analysed <- 
-  analyse_TPP(TPP_tbl = four_prot_normalised,
+# Analyse twenty-protein data
+twenty_prot_analysed <- 
+  analyse_TPP(TPP_tbl = twenty_prot_normalised,
               control_name = "Control",
               p_value_methods = c("melting_point", "NPARC"))
 
 # Analysed data and fitted curves
-plot_melt(four_prot_analysed)
+plot_melt(twenty_prot_analysed)
+#> Warning: Removed 1000 rows containing missing values or values outside the scale range
+#> (`geom_segment()`).
+#> Warning: Removed 3000 rows containing missing values or values outside the scale range
+#> (`geom_segment()`).
+#> Warning: Removed 4000 rows containing missing values or values outside the scale range
+#> (`geom_segment()`).
 ```
 
-<img src="man/figures/README-example_analysis-1.png" width="75%" />
+<img src="man/figures/README-example_analysis-1.png" width="100%" />
 
 All statistics are appended as new measurements to the *tibble*:
 
 ``` r
 # Full table
-four_prot_analysed
-#> # A tibble: 160 × 31
+twenty_prot_analysed
+#> # A tibble: 800 × 25
 #>    Protein_ID Condition Replicate  Temp Pep_N Match_N rel_quantity raw_quantity
 #>    <chr>      <chr>     <chr>     <int> <dbl>   <dbl>        <dbl>        <dbl>
-#>  1 Protein_A  Control   01           37    36      62       1.000      7913466.
-#>  2 Protein_A  Control   01           56    36      62       0.0580      362589.
-#>  3 Protein_A  Control   01           47    36      62       0.718      5454540.
-#>  4 Protein_A  Control   01           53    36      62       0.221      1542812.
-#>  5 Protein_A  Control   01           41    36      62       0.992      7238843 
-#>  6 Protein_A  Control   01           50    36      62       0.493      3291901 
-#>  7 Protein_A  Control   01           63    36      62       0.0231      204328.
-#>  8 Protein_A  Control   01           44    36      62       0.947      7083090 
-#>  9 Protein_A  Control   01           67    36      62       0.0111       78023.
-#> 10 Protein_A  Control   01           59    36      62       0.0167      132594.
-#> # ℹ 150 more rows
-#> # ℹ 23 more variables: norm_coefficient <dbl>, F_scaled <dbl>,
+#>  1 Protein_A  Control   01           37    29      42       1          1401047.
+#>  2 Protein_A  Control   01           47    29      42       1.15       1568061.
+#>  3 Protein_A  Control   01           50    29      42       1.30       1889459 
+#>  4 Protein_A  Control   01           59    29      42       0.0904      162054.
+#>  5 Protein_A  Control   01           67    29      42       0.166       232101.
+#>  6 Protein_A  Control   01           53    29      42       1.23       1801219.
+#>  7 Protein_A  Control   01           56    29      42       0.450       630379.
+#>  8 Protein_A  Control   01           44    29      42       1.03       1485400.
+#>  9 Protein_A  Control   01           63    29      42       0.131       132437.
+#> 10 Protein_A  Control   01           41    29      42       0.999      1464157.
+#> # ℹ 790 more rows
+#> # ℹ 17 more variables: norm_coefficient <dbl>, F_scaled <dbl>,
 #> #   p_adj_NPARC <dbl>, a <dbl>, b <dbl>, plateau <dbl>, melt_point <dbl>,
-#> #   infl_point <dbl>, slope <dbl>, R_sq <dbl>, RSS <dbl>, sigma <dbl>,
-#> #   n_coeffs <int>, n_obs <int>, log_lik <dbl>, AICc <dbl>, Comparison <chr>,
+#> #   infl_point <dbl>, slope <dbl>, R_sq <dbl>, Comparison <chr>,
 #> #   diff_melt_point <dbl>, min_comparison_slope <dbl>, min_R_sq <dbl>,
 #> #   min_slope <dbl>, max_control_plateau <dbl>, adj_pvalue <dbl>
 
 # Statistics only
 one_prot_stats <- 
-  four_prot_analysed |>
+  twenty_prot_analysed |>
   dplyr::filter(Protein_ID == "Protein_A", Condition != "Control") |>
   dplyr::select(Protein_ID, 
                 Condition, 
@@ -406,8 +412,8 @@ one_prot_stats |>
 #> # A tibble: 2 × 6
 #>   Protein_ID Condition Replicate melt_point diff_melt_point adj_pvalue
 #>   <chr>      <chr>     <chr>          <dbl>           <dbl>      <dbl>
-#> 1 Protein_A  Treated   01              51.3            1.63      0.604
-#> 2 Protein_A  Treated   02              50.5            1.36      0.604
+#> 1 Protein_A  Treated   01              56.0          0.0801      0.998
+#> 2 Protein_A  Treated   02              56.0          0.0851      0.998
 
 # 2. NPARC
 one_prot_stats |>
@@ -420,7 +426,7 @@ one_prot_stats |>
 #> # A tibble: 1 × 4
 #>   Protein_ID Condition F_scaled p_adj_NPARC
 #>   <chr>      <chr>        <dbl>       <dbl>
-#> 1 Protein_A  Treated       4.52     0.00179
+#> 1 Protein_A  Treated      0.128       0.994
 ```
 
 ### Hit Identification
@@ -432,9 +438,9 @@ across replicates, and $\Delta T_m$ for comparisons against controls
 greater than between controls.<sup>[1](#ref-Savitski_2014)</sup>
 
 ``` r
-# Get hits from analysed four-protein data
-four_prot_hits <- 
-  get_TPP_hits(TPP_data = four_prot_analysed,
+# Get hits from analysed twenty-protein data
+twenty_prot_hits <- 
+  get_TPP_hits(TPP_data = twenty_prot_analysed,
                hit_criteria = "default_hit_criteria",
                to_plot = TRUE,
                annotate = "melt_point")
@@ -454,19 +460,20 @@ four_prot_hits <-
 #> Saved.
 #> --------------------
 #> Plotting hit melting curves...
-#> 1 hits found.
+#> 2 hits found.
 #> --------------------
 
-four_prot_hits
-#> # A tibble: 1 × 10
+twenty_prot_hits
+#> # A tibble: 2 × 10
 #>   Protein_ID Condition Comparison         F_scaled p_adj_NPARC max_adj_pvalue
 #>   <chr>      <chr>     <chr>                 <dbl>       <dbl>          <dbl>
-#> 1 Protein_A  Treated   Treated_vs_Control     4.52     0.00179          0.604
+#> 1 Protein_I  Treated   Treated_vs_Control     23.2   0.0000901      0.0000141
+#> 2 Protein_C  Treated   Treated_vs_Control     14.1   0.00118        0.0981   
 #> # ℹ 4 more variables: mean_melt_point <dbl>, mean_control_melt_point <dbl>,
 #> #   mean_diff_melt_point <dbl>, mean_control_diff_melt_point <dbl>
 ```
 
-<img src="man/figures/README-example_hits-1.png" style="width:75.0%" />
+<img src="man/figures/README-example_hits-1.png" style="width:100.0%" />
 
 ### Export
 
@@ -476,7 +483,7 @@ are delimited text files (.csv, .tsv) or R data.
 
 ``` r
 # Export as .xlsx
-export_TPP(TPP_data = four_prot_analysed,
+export_TPP(TPP_data = twenty_prot_analysed,
            file_name = "TPP_results.xlsx",
            format = "xlsx")
 ```

@@ -92,6 +92,7 @@ get_pval_by_melting_point <- function(fit_tbl, comparisons = NULL){
 
   # 5. Adjust with benjamini-hochberg over full sample set.
   pval_tbl$adj_pvalue <- stats::p.adjust(pval_tbl$pvalue, "BH")
+  print(dplyr::filter(pval_tbl, adj_pvalue < 0.1))
 
   cols_to_keep <-
     names(pval_tbl) %in% c("Protein_ID", "Condition", "Replicate", "adj_pvalue")
@@ -122,9 +123,11 @@ calculate_binwise_pvalue <- function(binned_data){
   right_binned_data$z <-  (right_binned_data$diff_melt_point - q2) / (q3-q2)
   left_binned_data$z <- (q2 - left_binned_data$diff_melt_point) / (q2-q1)
 
+
   # Recombine, calculate p-value
   binned_data <- rbind(right_binned_data, left_binned_data)
   binned_data$pvalue <- 2 * stats::pnorm(abs(binned_data$z), lower.tail = FALSE)
   binned_data <- binned_data[order(binned_data$min_slope),]
 
+  binned_data
 }

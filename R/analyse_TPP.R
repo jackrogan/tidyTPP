@@ -133,8 +133,6 @@ analyse_TPP <-
   fit_tbl <-
     fit_melt_by_experiment(TPP_tbl, y_column = "quantity", silent = silent, ...)
 
-  print(fit_tbl)
-
   if(!silent){
     cat("--------------------\n")
     cat("Statistic calculation:\n")

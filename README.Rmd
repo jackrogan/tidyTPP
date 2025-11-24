@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "75%"
+  out.width = "100%"
 )
 
 library(knitcitations)
@@ -151,18 +151,18 @@ defines maximum parallel cores to use for these operations.
 
 * Default *4*.
 
-```{r apply_pipeline, results='hide', fig.show='hide', fig.dim=c(8,5)}
-# Pipeline example: 4-protein test data
+```{r apply_pipeline, results='hide', fig.show='hide', fig.dim=c(8,4)}
+# Pipeline example: 20-protein test data
 library(tidyTPP)
 
-four_prot_report <-
-    system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
+twenty_prot_report <-
+    system.file("extdata", "20_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
-    system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
+    system.file("extdata", "20_protein_config.csv", package = "tidyTPP")
 
 # Apply pipeline
 TPP_hits <- 
-  apply_TPP_pipeline(datafile = four_prot_report,
+  apply_TPP_pipeline(datafile = twenty_prot_report,
                     config = experiment_config,
                     import_format = "spectronaut",
                     to_plot = TRUE,
@@ -177,11 +177,11 @@ Result:
 TPP_hits
 ```
 
-![](`r knitr::fig_chunk('apply_pipeline', 'png', 4)`){width=75%}
+![](`r knitr::fig_chunk('apply_pipeline', 'png', 4)`){width=100%}
 
 ## Example: Function detail
 
-This example will walk through the main functions using 4-protein example data
+This example will walk through the main functions using 20-protein example data
 
 ### Import
 
@@ -190,24 +190,24 @@ program-specific format, and a configuration file, defining conditions,
 replicates and temperatures, in the format shown.
 
 ```{r example_import}
-# 4-protein example data
-four_prot_report <-
-    system.file("extdata", "4_protein_peptide_report.csv", package = "tidyTPP")
+# 20-protein example data
+twenty_prot_report <-
+    system.file("extdata", "20_protein_peptide_report.csv", package = "tidyTPP")
 experiment_config <-
-    system.file("extdata", "4_protein_config.csv", package = "tidyTPP")
+    system.file("extdata", "20_protein_config.csv", package = "tidyTPP")
 experiment_dir <- system.file("extdata", package = "tidyTPP")
   
 # Config file contents
 read.csv(experiment_config)[1:10,]
 
 # Import using spectronaut import format
-four_prot_quan_data <- 
-  import_spectronaut(datafile = "4_protein_peptide_report.csv",
-                     config = "4_protein_config.csv",
+twenty_prot_quan_data <- 
+  import_spectronaut(datafile = "20_protein_peptide_report.csv",
+                     config = "20_protein_config.csv",
                      path = experiment_dir)
 
 # Resulting tibble
-four_prot_quan_data
+twenty_prot_quan_data
 
 ```
 
@@ -215,7 +215,7 @@ Data at this stage can be plotted to directly observe relative but *not yet
 normalised* protein curves.
 
 ``` {r example_import_plot, results='hide', fig.dim=c(8,7)}
-plot_melt(four_prot_quan_data)
+plot_melt(twenty_prot_quan_data)
 
 ```
 
@@ -225,20 +225,20 @@ against fitted median melting curves, as described by Savitsky *et al.* 2014.
 `r citep("10.1126/science.1255784")`
 
 ``` {r example_normalisation, fig.dim=c(8,7), fig.show='hide'}
-# Normalise four-protein data, with visualisation
-four_prot_normalised <- 
-  normalise_TPP(TPP_tbl = four_prot_quan_data,
+# Normalise twenty-protein data, with visualisation
+twenty_prot_normalised <- 
+  normalise_TPP(TPP_tbl = twenty_prot_quan_data,
                 to_plot = TRUE)
 ```
-![](`r knitr::fig_chunk('example_normalisation', 'png')`){width=75%}
+![](`r knitr::fig_chunk('example_normalisation', 'png')`){width=100%}
 
 Resulting in the normalised data:
 
 ```{r example_normalisation_plot, fig.show='hide', fig.dim=c(8,7)}
 # Plotted melting data points
-plot_melt(four_prot_normalised)
+plot_melt(twenty_prot_normalised)
 ```
-![](`r knitr::fig_chunk('example_normalisation_plot', 'png')`){width=75%}
+![](`r knitr::fig_chunk('example_normalisation_plot', 'png')`){width=100%}
 
 ### Analysis
 *analyse_TPP* fits sigmoidal melting curves are fitted to each unique 
@@ -256,25 +256,25 @@ from the data:
 Default behaviour is to apply both analyses:
 
 ```{r example_analysis, results='hide', fig.dim=c(8,7)}
-# Analyse four-protein data
-four_prot_analysed <- 
-  analyse_TPP(TPP_tbl = four_prot_normalised,
+# Analyse twenty-protein data
+twenty_prot_analysed <- 
+  analyse_TPP(TPP_tbl = twenty_prot_normalised,
               control_name = "Control",
               p_value_methods = c("melting_point", "NPARC"))
 
 # Analysed data and fitted curves
-plot_melt(four_prot_analysed)
+plot_melt(twenty_prot_analysed)
 ```
 
 All statistics are appended as new measurements to the *tibble*:
 
 ```{r example_analysis_table}
 # Full table
-four_prot_analysed
+twenty_prot_analysed
 
 # Statistics only
 one_prot_stats <- 
-  four_prot_analysed |>
+  twenty_prot_analysed |>
   dplyr::filter(Protein_ID == "Protein_A", Condition != "Control") |>
   dplyr::select(Protein_ID, 
                 Condition, 
@@ -315,17 +315,17 @@ NPARC-derived, FDR-adjusted p-value below 0.05,
 replicates, and $\Delta T_m$ for comparisons against controls greater than 
 between controls.`r citep("10.1126/science.1255784")`
 
-```{r example_hits, fig.show='hide', fig.dim=c(8,5)}
-# Get hits from analysed four-protein data
-four_prot_hits <- 
-  get_TPP_hits(TPP_data = four_prot_analysed,
+```{r example_hits, fig.show='hide', fig.dim=c(8,4)}
+# Get hits from analysed twenty-protein data
+twenty_prot_hits <- 
+  get_TPP_hits(TPP_data = twenty_prot_analysed,
                hit_criteria = "default_hit_criteria",
                to_plot = TRUE,
                annotate = "melt_point")
 
-four_prot_hits
+twenty_prot_hits
 ```
-![](`r knitr::fig_chunk('example_hits', 'png')`){width=75%}
+![](`r knitr::fig_chunk('example_hits', 'png')`){width=100%}
 
 ### Export
 
@@ -335,7 +335,7 @@ files (.csv, .tsv) or R data.
 
 ```{r example_export, eval=FALSE}
 # Export as .xlsx
-export_TPP(TPP_data = four_prot_analysed,
+export_TPP(TPP_data = twenty_prot_analysed,
            file_name = "TPP_results.xlsx",
            format = "xlsx")
 
