@@ -17,7 +17,7 @@ build_melt_plot_with_model(
 )
 }
 \arguments{
-\item{data}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{data}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. In all cases, this must contain
 the columns:
 \describe{
@@ -39,7 +39,7 @@ defaults to Protein_ID values}
 defaults to "01"}
 }}
 
-\item{predicted_data}{A data frame (or \link{tibble}) containing predicted protein
+\item{predicted_data}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing predicted protein
 melting curve data \emph{e.g.} from \code{\link[=predict_melt_curve]{predict_melt_curve()}}. As for \code{data},
 this must contain the columns \emph{Temp} and \emph{rel_quantity} (or name
 specified with \code{quan_name}), and the columns \emph{Protein_ID},
@@ -73,7 +73,7 @@ for plot facets}
 A \code{ggplot} object.
 }
 \description{
-\code{build_melt_plot_with_model()} creates a \link{ggplot2} plot, showing the protein
+\code{build_melt_plot_with_model()} creates a \link[ggplot2:ggplot2-package]{ggplot2::ggplot2} plot, showing the protein
 melting curves given in \code{data} and \code{predicted_data} for observed points and
 fitted line, respectively.
 }

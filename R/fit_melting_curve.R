@@ -13,7 +13,7 @@
 #' * `upper = c(pl = 1.5, a = 15000, b = 250)`
 #' * `na.action = na.omit`
 #' * `algorithm = "port"`
-#' * `control = nls.control(maxiter=50))`
+#' * `control = stats::nls.control(maxiter=50))`
 #'
 #' Alternatively, [nls_multstart] can be used to estimate a series of starting
 #' parameters for the non-linear model using a gridstart approach.
@@ -119,13 +119,13 @@ fit_melting_curve <- function(data,
                          "max_attempts" = 100,
                          "lower" = c(pl = 0, a = 0.00001, b = 0.00001),
                          "upper" = c(pl = 1.5, a = 15000, b = 250),
-                         "na.action" = na.omit,
+                         "na.action" = stats::na.omit,
                          "algorithm" = "port",
-                         "control" = nls.control(maxiter=50))
+                         "control" = stats::nls.control(maxiter=50))
     nls_args <-
       nls_defaults[sapply(names(nls_defaults), \(x) !x %in% names(nls_dots))]
     nls_args <- c(nls_args, nls_dots)
-    nls_args <- nls_args[names(nls_args) %in% names(formals(nls))]
+    nls_args <- nls_args[names(nls_args) %in% names(formals(stats::nls))]
     # Use try and repeat
 
     fit <- do.call(repeat_nls, nls_args)
@@ -186,9 +186,10 @@ repeat_nls <- function(start = c(pl = 0, a = 550, b = 10),
   repeat_fit <- TRUE
 
   while (repeat_fit){
-    mod_start <- start * (1 + runif(1, -0.5, 0.5))
+    mod_start <- start * (1 + stats::runif(1, -0.5, 0.5))
     fit <-
-      try(do.call(nls, list("start" = mod_start, ...)), silent = !show_errors)
+      try(do.call(stats::nls, list("start" = mod_start, ...)),
+          silent = !show_errors)
     i <- i + 1
     repeat_fit <- inherits(fit, "try-error") & i < max_attempts
   }

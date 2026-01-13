@@ -183,7 +183,6 @@ analyse_TPP <-
   control_max_tbl <- unique(control_max_tbl)
   colnames(control_max_tbl)[2] <- "max_control_plateau"
   fit_tbl <- merge(fit_tbl, control_max_tbl)
-
   if(!silent) cat("Calculate p-values...\n")
   # Get P values (from Tm as in Savitsky 2014)
   if("melting_point" %in% p_value_methods) {

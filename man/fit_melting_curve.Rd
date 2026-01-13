@@ -17,7 +17,7 @@ fit_melting_curve(
 )
 }
 \arguments{
-\item{data}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{data}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item Experiment temperature in \eqn{\degree C}
@@ -39,14 +39,14 @@ the progress bar if necessary, ignored if silent = \code{TRUE}
 
 \item{silent}{Boolean. If \code{TRUE}, no console output is shown}
 
-\item{show_errors}{Boolean. If \code{TRUE}, errors in calling \code{\link[=nls_multstart]{nls_multstart()}}
+\item{show_errors}{Boolean. If \code{TRUE}, errors in calling \code{\link[nls.multstart:nls_multstart]{nls.multstart::nls_multstart()}}
 will be shown in console output}
 
 \item{curve_fit_method}{Character. Method for sigmoid curve fitting -
 either \emph{"nls"} for a repeated \code{\link[=nls]{nls()}} approach (default) or
-\emph{"nls.multstart"} for \code{\link[=nls_multstart]{nls_multstart()}}.}
+\emph{"nls.multstart"} for \code{\link[nls.multstart:nls_multstart]{nls.multstart::nls_multstart()}}.}
 
-\item{...}{Further arguments to be passed to \code{\link[=nls]{nls()}} or \code{\link[=nls_multstart]{nls_multstart()}}}
+\item{...}{Further arguments to be passed to \code{\link[=nls]{nls()}} or \code{\link[nls.multstart:nls_multstart]{nls.multstart::nls_multstart()}}}
 }
 \value{
 A \code{tibble} with 1 row and 13 variables:
@@ -83,10 +83,10 @@ Arguments given to \code{nls()} by default are:
 \item \code{upper = c(pl = 1.5, a = 15000, b = 250)}
 \item \code{na.action = na.omit}
 \item \code{algorithm = "port"}
-\item \verb{control = nls.control(maxiter=50))}
+\item \verb{control = stats::nls.control(maxiter=50))}
 }
 
-Alternatively, \link{nls_multstart} can be used to estimate a series of starting
+Alternatively, \link[nls.multstart:nls_multstart]{nls.multstart::nls_multstart} can be used to estimate a series of starting
 parameters for the non-linear model using a gridstart approach.
 Arguments given to \code{nls_multstart()} by default are:
 \itemize{

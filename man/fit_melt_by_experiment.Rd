@@ -13,7 +13,7 @@ fit_melt_by_experiment(
 )
 }
 \arguments{
-\item{data}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{data}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item Experiment temperature in \eqn{\degree C}
@@ -32,7 +32,7 @@ If \code{max_cores} is 1, then curve fitting will be run serially in
 a single process}
 
 \item{...}{Further arguments to be passed to \code{\link[=fit_melting_curve]{fit_melting_curve()}} and
-\code{\link[=nls_multstart]{nls_multstart()}}}
+\code{\link[nls.multstart:nls_multstart]{nls.multstart::nls_multstart()}}}
 }
 \value{
 A \code{tibble} with 1 row and \emph{13 + n} variables (where

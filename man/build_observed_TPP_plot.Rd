@@ -14,7 +14,7 @@ build_observed_TPP_plot(
 )
 }
 \arguments{
-\item{data}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{data}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. In all cases, this must contain
 the columns:
 \describe{
@@ -54,7 +54,7 @@ for plot facets}
 A \code{ggplot} object.
 }
 \description{
-\code{build_observed_TPP_plot()} creates a \link{ggplot2} plot, showing the protein
+\code{build_observed_TPP_plot()} creates a \link[ggplot2:ggplot2-package]{ggplot2::ggplot2} plot, showing the protein
 melting data points given in \code{data} only. To add fitted melting curves use
 \code{build_melt_plot_with_model()}.
 }

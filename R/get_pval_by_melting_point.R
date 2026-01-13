@@ -92,7 +92,6 @@ get_pval_by_melting_point <- function(fit_tbl, comparisons = NULL){
 
   # 5. Adjust with benjamini-hochberg over full sample set.
   pval_tbl$adj_pvalue <- stats::p.adjust(pval_tbl$pvalue, "BH")
-  print(dplyr::filter(pval_tbl, adj_pvalue < 0.1))
 
   cols_to_keep <-
     names(pval_tbl) %in% c("Protein_ID", "Condition", "Replicate", "adj_pvalue")

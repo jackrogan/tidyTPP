@@ -20,7 +20,7 @@ get_NPARC_pval(
 )
 }
 \arguments{
-\item{TPP_tbl}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{TPP_tbl}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item \code{Protein_ID}: Unique protein identity
@@ -40,8 +40,9 @@ hypotheses for NPARC analysis. One of:
 \item \code{nonlinear} or \code{nls}: fit nonlinear sigmoid curves.
 }}
 
-\item{degrees_of_freedom}{Numeric. Range of degrees of freedom to use to
-generate possible \eqn{H_{null}} and \eqn{H_{alt}} curves.}
+\item{degrees_of_freedom}{Numeric. Fitting using "splines" only: range of
+degrees of freedom to use to generate possible \eqn{H_{null}} and
+\eqn{H_{alt}} curves.}
 
 \item{alt_model}{A \code{data.frame} with model parameter data for the alternative
 hypothesis. Must include experimental condition and replicate columns as
@@ -51,8 +52,8 @@ well as \code{a}, \code{b}, \code{plateau}, \code{melt_point}, \code{infl_point}
 See example output for \link{fit_melt_by_experiment}}
 
 \item{max_cores}{Integer. The maximum number of cores to parallelise the
-spline fitting over, if less than the maximum number of cores available.
-If \code{max_cores} is 1, then spline fitting will be run serially in
+curve fitting over, if less than the maximum number of cores available.
+If \code{max_cores} is 1, then curve fitting will be run serially in
 a single process}
 
 \item{comparisons}{A data.frame containing the information needed to build
@@ -82,7 +83,7 @@ experiment in \code{TPP_tbl$Condition}}
 F-statistic and p-value on calculating \emph{NPARC} statistics}
 
 \item{to_save}{Character. If supplied, will generate distribution plots of
-F-statistic and p-value and save with \code{\link[=ggsave]{ggsave()}}}
+F-statistic and p-value and save with \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}}
 
 \item{silent}{Boolean. If \code{TRUE}, no console output is shown}
 }

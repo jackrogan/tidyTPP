@@ -152,7 +152,6 @@ normalise_TPP <- function(TPP_tbl,
     Reduce(rbind, x = _) |>
     stats::aggregate(quantity ~ Condition + Replicate + Temp,
                      FUN = stats::median)
-
   # 6. Fit curves to median normP sets.
   if(!silent) {
     cat("--------------------\n")

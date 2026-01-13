@@ -129,13 +129,13 @@ get_TPP_hits <- function(
     silent = FALSE,
     ...
 ){
-  TPP_hits <- TPP_data
+  TPP_summary <- TPP_data
 
-  if(!"Replicate" %in% colnames(TPP_hits)) TPP_hits$Replicate <- "01"
+  if(!"Replicate" %in% colnames(TPP_summary)) TPP_summary$Replicate <- "01"
 
   if(inherits(hit_criteria, "character") &
      "default_hit_criteria" %in% hit_criteria){
-    if("p_adj_NPARC" %in% colnames(TPP_hits)){
+    if("p_adj_NPARC" %in% colnames(TPP_summary)){
       hit_criteria <-
         list(
           NPARC_pvalue_threshold = 0.05,
@@ -166,16 +166,16 @@ get_TPP_hits <- function(
     cat("--------------------\n")
   }
 
-  TPP_hits <-
-    TPP_hits[, colnames(TPP_hits) %in%
+  TPP_summary <-
+    TPP_summary[, colnames(TPP_summary) %in%
                c("Protein_ID", "Condition", "Replicate", "Comparison", "a", "b",
                  "plateau", "melt_point", "infl_point", "slope", "R_sq",
                  "diff_melt_point", "min_comparison_slope",
                  "F_scaled", "p_adj_NPARC", "adj_pvalue")]
-  TPP_hits <- unique(TPP_hits)
+  TPP_summary <- unique(TPP_summary)
 
   # Move control delta-Tm to its own column.
-  control_tbl <- TPP_hits[TPP_hits$Condition == control_name,]
+  control_tbl <- TPP_summary[TPP_summary$Condition == control_name,]
 
   # Use mean absolute control difference
   control_tbl <-
@@ -186,16 +186,17 @@ get_TPP_hits <- function(
 
   colnames(control_tbl)[2] <- "mean_control_melt_point"
   colnames(control_tbl)[3] <- "abs_diff_melt_control"
-  TPP_hits <- merge(TPP_hits[TPP_hits$Condition != control_name,], control_tbl)
+  TPP_summary <-
+    merge(TPP_summary[TPP_summary$Condition != control_name,], control_tbl)
 
-  starting_colnames <- colnames(TPP_hits)
+  starting_colnames <- colnames(TPP_summary)
   stat_columns_present <- c("p_adj_NPARC", "adj_pvalue", "diff_melt_point",
                             "min_comparison_slope")
   stat_columns_present <-
-    stat_columns_present[which(stat_columns_present %in% colnames(TPP_hits))]
+    stat_columns_present[which(stat_columns_present %in% colnames(TPP_summary))]
 
-  TPP_hits <-
-    find_exp_stats(TPP_hits,
+  TPP_summary <-
+    find_exp_stats(TPP_summary,
                     stat_func = c(min = min,
                                   max = max,
                                   all_same_sign = \(x) all(x > 0) | all(x < 0),
@@ -203,8 +204,9 @@ get_TPP_hits <- function(
                     stat_column = stat_columns_present,
                     experiment_cols = c("Protein_ID", "Condition"))
 
-
+  TPP_hits <- TPP_summary
   if(length(hit_criteria) > 0){
+
 
     # Filter 1: pvalue threshold (Melting point difference)
     if("pvalue_min_threshold" %in% names(hit_criteria)){
@@ -250,7 +252,13 @@ get_TPP_hits <- function(
         }
       }
     }
-    TPP_hits <- TPP_hits[c(starting_colnames, "max_adj_pvalue")]
+
+    # Re-filter by Protein ID to keep results across confitions
+    TPP_hit_proteins <- unique(TPP_hits$Protein_ID)
+    TPP_hits <-
+      TPP_summary[TPP_summary$Protein_ID %in% TPP_hit_proteins,
+               c(starting_colnames, "max_adj_pvalue")]
+
   }
 
   if(nrow(TPP_hits) > 0 & !all(is.na(TPP_hits$Protein_ID))){
@@ -293,7 +301,17 @@ get_TPP_hits <- function(
       TPP_hits[order(TPP_hits$mean_diff_melt_point, decreasing = TRUE),]
     }
 
-    if(!is.null(n_hits)) TPP_hits <- utils::head(TPP_hits, n_hits)
+    # Reorder by protein by (p-value/DTm)
+    # TPP_hits$Protein_ID <-
+    #   factor(TPP_hits$Protein_ID, levels = unique(TPP_hits$Protein_ID))
+    TPP_hits <- TPP_hits[order(TPP_hits$Protein_ID),]
+
+    if(!is.null(n_hits)) {
+      TPP_hits <-
+        TPP_hits[
+          TPP_hits$Protein_ID %in%
+            utils::head(unique(TPP_hits$Protein_ID), n_hits),]
+    }
 
     # Export data
     if(!is.null(to_export)) {

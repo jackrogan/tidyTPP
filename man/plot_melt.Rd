@@ -25,7 +25,7 @@ this dataset, as \code{a}, \code{b}, \code{plateau} and, if intending to annotat
 
 \item{to_plot}{Boolean. If true, run \code{\link[=plot]{plot()}} on \code{ggplot} object}
 
-\item{to_save}{Character. If supplied, save plot with \code{\link[=ggsave]{ggsave()}}}
+\item{to_save}{Character. If supplied, save plot with \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}}
 
 \item{file_suffix_column}{Character. The name of a column to be used as an
 additional file suffix before the extension if \code{to_save} is given and the
@@ -33,13 +33,13 @@ plot is to be saved. The first element of the given column of \code{data} will b
 used to identify the plot.}
 
 \item{to_add_to_ggplot}{List. Optional list of further additions to \code{ggplot};
-will be added using \code{\link[=+.gg]{+.gg()}}}
+will be added using \code{\link[ggplot2:gg-add]{ggplot2::+.gg()}}}
 
 \item{...}{Additional arguments to be passed to \code{\link[=predict_melt_curve]{predict_melt_curve()}} or
 \code{\link[=build_melt_plot_with_model]{build_melt_plot_with_model()}}}
 }
 \value{
-A data frame or \link{tibble} given in \code{data}
+A data frame or \link[tibble:tibble]{tibble::tibble} given in \code{data}
 }
 \description{
 \code{plot_melt} builds and plots a protein melting point from proteomics

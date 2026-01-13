@@ -17,7 +17,7 @@ analyse_TPP(
 )
 }
 \arguments{
-\item{TPP_tbl}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{TPP_tbl}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item \code{Protein_ID}: Unique protein identity
@@ -95,10 +95,10 @@ Benjamini-Hochberg procedure to control the false discovery rate
 F-statistic and p-value on calculating \emph{NPARC} statistics}
 
 \item{to_save}{Character. If supplied, will generate distribution plots of
-F-statistic and p-value and save with \code{\link[=ggsave]{ggsave()}}}
+F-statistic and p-value and save with \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}}
 
 \item{...}{Further arguments to be passed to \code{\link[=fit_melt_by_experiment]{fit_melt_by_experiment()}} and
-\code{\link[=nls_multstart]{nls_multstart()}}}
+\code{\link[nls.multstart:nls_multstart]{nls.multstart::nls_multstart()}}}
 }
 \value{
 A \code{tibble} containing all data in TPP_tbl, with additional calculated

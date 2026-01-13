@@ -71,7 +71,7 @@ this will not be saved.}
 and \code{plot()}}
 
 \item{to_save}{Character. If supplied, will generate melting point curves of
-hits and save with \code{\link[=ggsave]{ggsave()}}}
+hits and save with \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}}
 
 \item{plot_separately}{Boolean. If TRUE, and either \code{to_plot} is TRUE or
 \code{to_save} is not \code{NULL}, melting point plots will be generated per protein.

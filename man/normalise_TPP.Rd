@@ -15,7 +15,7 @@ normalise_TPP(
 )
 }
 \arguments{
-\item{TPP_tbl}{A data frame (or \link{tibble}) containing proteomics data from a
+\item{TPP_tbl}{A data frame (or \link[tibble:tibble]{tibble::tibble}) containing proteomics data from a
 thermal protein profiling (TPP) experiment. This must contain the columns:
 \itemize{
 \item \code{Protein_ID}: Unique protein identity
@@ -30,7 +30,7 @@ assumed.}
 
 \item{to_plot}{Boolean. If true, run \code{\link[=plot]{plot()}} on \code{ggplot} object}
 
-\item{to_save}{Character. If supplied, save plot with \code{\link[=ggsave]{ggsave()}}}
+\item{to_save}{Character. If supplied, save plot with \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}}
 
 \item{quality_filter}{A data.frame containing the information needed to build
 an initial quantity filter. Columns must be \emph{col}, \emph{lower} and

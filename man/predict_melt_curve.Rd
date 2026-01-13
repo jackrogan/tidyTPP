@@ -34,7 +34,7 @@ curve}
 predict; overrides \code{n_predict}, \code{low_T} and \code{high_T}}
 }
 \value{
-A \code{tibble} (from \code{\link[=tibble]{tibble()}}) including original \code{data.frame} columns,
+A \code{tibble} (from \code{\link[tibble:tibble]{tibble::tibble()}}) including original \code{data.frame} columns,
 if any, \code{Temp}, and paired \code{model_quantity}
 }
 \description{
