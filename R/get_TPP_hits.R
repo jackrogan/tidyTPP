@@ -301,17 +301,17 @@ get_TPP_hits <- function(
       TPP_hits[order(TPP_hits$mean_diff_melt_point, decreasing = TRUE),]
     }
 
-    # Reorder by protein by (p-value/DTm)
-    # TPP_hits$Protein_ID <-
-    #   factor(TPP_hits$Protein_ID, levels = unique(TPP_hits$Protein_ID))
-    TPP_hits <- TPP_hits[order(TPP_hits$Protein_ID),]
-
     if(!is.null(n_hits)) {
       TPP_hits <-
         TPP_hits[
           TPP_hits$Protein_ID %in%
             utils::head(unique(TPP_hits$Protein_ID), n_hits),]
     }
+
+    # Reorder by protein by (p-value/DTm)
+    # TPP_hits$Protein_ID <-
+    #   factor(TPP_hits$Protein_ID, levels = unique(TPP_hits$Protein_ID))
+    TPP_hits <- TPP_hits[order(TPP_hits$Protein_ID),]
 
     # Export data
     if(!is.null(to_export)) {

@@ -31,11 +31,11 @@ test_that("Custom import is chosen correctly", {
                config,
                import_format = "CUSTOM",
                table_format = "wide",
-               protein_id_col_name = "Gene.Symbol",
-               quantity_pattern = "Abundance",
+               protein_id_col_name = "^Gene\\WSymbol$",
+               quantity_pattern = "^Abundance[\\.:]",
                experiment_id_func = experiment_id_func,
-               pep_n_col_name = "X..Peptides",
-               match_n_col_name = "X..PSMs",
+               pep_n_col_name = "\\W\\WPeptides$",
+               match_n_col_name = "\\W\\WPSMs$",,
                silent = TRUE),
     tibble::tibble(quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",])
   )

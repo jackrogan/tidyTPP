@@ -162,47 +162,69 @@ import_custom_format <- function(datafile,
 
   if(!silent) cat("--------------------\n")
 
+  # Function to get colnames that match arguments only if not null
+  colname_grep <- function(pattern, return_type = "v"){
+    if(!is.null(pattern)) {
+      if(return_type == "l") {
+        grepl(pattern, colnames(data_in_tbl))
+      } else {
+        grep(pattern, colnames(data_in_tbl), value = TRUE)
+      }
+    } else {
+      NULL
+    }
+  }
+
   # Default wide format
   table_format <- table_format[1]
 
   quan_cols <- NULL
   # Required columns:
   # Protein ID, Peptide Precursor (if present), PG raw quantities
-  if(!is.null(quantity_pattern)){
-    quan_cols <- grep(quantity_pattern, colnames(data_in_tbl), value = TRUE)
-  }
-  if(table_format == "long" & !is.null(quantity_col_name)){
-    quan_cols <- quantity_col_name
-  }
+  # if(!is.null(quantity_pattern)){
+  #   quan_cols <- grep(quantity_pattern, colnames(data_in_tbl), value = TRUE)
+  # }
+  quan_cols <- colname_grep(quantity_pattern)
+  # if(table_format == "long" & !is.null(quantity_col_name)){
+  #   quan_cols <- quantity_col_name
+  # }
+  if(table_format == "long") quan_cols <- colname_grep(quantity_col_name)
   if(is.null(quan_cols) | length(quan_cols) == 0){
     if(!silent) cat("No quantity columns identified!\n")
     return(NULL)
   }
-  protein_id_col_name <-
-    colnames(data_in_tbl)[colnames(data_in_tbl) == protein_id_col_name]
+  # protein_id_col_name <-
+  #   colnames(data_in_tbl)[grepl(protein_id_col_name, colnames(data_in_tbl))]
+  protein_id_col_name <- colname_grep(protein_id_col_name)
   if(length(protein_id_col_name) == 0){
     if(!silent) cat("No protein ID columns identified!\n")
     return(NULL)
   }
-  experiment_col_name <-
-    colnames(data_in_tbl)[colnames(data_in_tbl) == experiment_col_name]
+  # if(!is.null(experiment_col_name)){
+  #   experiment_col_name <-
+  #     colnames(data_in_tbl)[grepl(experiment_col_name, colnames(data_in_tbl))]
+  # }
+  experiment_col_name <- colname_grep(experiment_col_name)
   if(table_format == "long" & length(experiment_col_name) == 0){
     if(!silent) cat("No experiment ID columns identified!\n")
     return(NULL)
   }
   if(all(!is.null(seq_col_name),
-         !seq_col_name %in% colnames(data_in_tbl),
+         !any(colname_grep(seq_col_name, return_type = "l")),
          !silent)){
     cat("Sequence column given does not match a column in data!\n")
     seq_col_name <- NULL
   }
 
+  pep_n_col_name <- colname_grep(pep_n_col_name)
+  match_n_col_name <- colname_grep(match_n_col_name)
   TPP_cols <- c(protein_id_col_name,
                 pep_n_col_name,
                 match_n_col_name,
                 seq_col_name,
                 experiment_col_name,
                 quan_cols)
+
   TPP_tbl <- data_in_tbl[TPP_cols]
   colnames(TPP_tbl)[1] <- "Protein_ID"
 
@@ -268,7 +290,8 @@ import_custom_format <- function(datafile,
   # Transform Experiment column
   if(!is.null(experiment_id_func)){
     if(!silent) cat("Transforming experiment names...\n")
-    TPP_tbl$Experiment <- as.numeric(experiment_id_func(TPP_tbl$Experiment))
+    # TPP_tbl$Experiment <- as.numeric(experiment_id_func(TPP_tbl$Experiment))
+    TPP_tbl$Experiment <- experiment_id_func(TPP_tbl$Experiment)
   }
 
   # Match to Experiment values
@@ -276,12 +299,17 @@ import_custom_format <- function(datafile,
   TPP_tbl <- merge(config_tbl, TPP_tbl)
   # Get T1 values. relative quantity
   if(!silent) cat("Finding relative quantity values...\n")
-  T1_tbl <- TPP_tbl[order(TPP_tbl$Temp),]
-  T1_tbl <- stats::aggregate(raw_quantity ~ Protein_ID + Condition + Replicate,
-                      T1_tbl, FUN = \(x) x[1])
-  colnames(T1_tbl)[4] <- "T1_quantity"
-  TPP_tbl <- merge(TPP_tbl, T1_tbl)
-  TPP_tbl$rel_quantity <- TPP_tbl$raw_quantity / TPP_tbl$T1_quantity
+  # TODO allow user-selected reference channel label
+  if("Pooled" %in% TPP_tbl$Temp){
+    if(!silent) cat("Using 'Pooled' reference channel label.\n")
+    TPP_tbl <- get_quantity_relative_to_reference(TPP_tbl)
+  } else {
+    TPP_tbl$rel_quantity <- TPP_tbl$raw_quantity
+  }
+
+  TPP_tbl <- get_quantity_relative_to_T1(TPP_tbl)
+  TPP_tbl$Temp <- as.numeric(TPP_tbl$Temp)
+
   TPP_tbl <-
     TPP_tbl[order(TPP_tbl$Protein_ID,
                   TPP_tbl$Condition,
@@ -304,6 +332,28 @@ import_custom_format <- function(datafile,
   }
 
   tibble::as_tibble(TPP_tbl)
+}
+
+get_quantity_relative_to_T1 <- function(TPP_tbl){
+  T1_tbl <- TPP_tbl[order(TPP_tbl$Temp),]
+  T1_tbl <- stats::aggregate(rel_quantity ~ Protein_ID + Condition + Replicate,
+                             T1_tbl, FUN = \(x) x[1])
+  colnames(T1_tbl)[4] <- "T1_quantity"
+  TPP_tbl <- merge(TPP_tbl, T1_tbl)
+  TPP_tbl$rel_quantity <- TPP_tbl$rel_quantity / TPP_tbl$T1_quantity
+  TPP_tbl
+}
+
+get_quantity_relative_to_reference <- function(TPP_tbl, ref_name = "Pooled"){
+  pooled_tbl <- TPP_tbl[TPP_tbl$Temp == ref_name,]
+  pooled_tbl$ref_quantity <- pooled_tbl$raw_quantity
+  pooled_tbl <-
+    pooled_tbl[c("Protein_ID", "Condition", "Replicate", "ref_quantity")]
+  TPP_tbl <- TPP_tbl[TPP_tbl$Temp != ref_name,]
+  TPP_tbl <- merge(TPP_tbl, pooled_tbl)
+  TPP_tbl$rel_quantity <- TPP_tbl$raw_quantity / TPP_tbl$ref_quantity
+  #TPP_tbl[colnames(TPP_tbl) != "ref_quantity"]
+  TPP_tbl
 }
 
 multiformat_import <- function(file, path = NULL, ...){

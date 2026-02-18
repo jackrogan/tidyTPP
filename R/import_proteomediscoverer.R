@@ -29,17 +29,18 @@ import_proteomediscoverer <- function(datafile,
 
   # Regex function to extract experiment ID:
   # digits contained in "...F(x).." e.g. "...F2.." -> 2
-  experiment_id_func = \(x) sub("^.*\\.{2}F(\\d+)\\.{2}.*$", "\\1", x)
+  experiment_id_func =
+    \(x) sub("^.*\\W{2}F(\\d+.*)\\W{2}.*$", "\\1", x)
 
 
   # Give presets to custom import function
   import_custom_format(datafile, config, path,
                        table_format = "wide",
-                       protein_id_col_name = "Gene.Symbol",
-                       quantity_pattern = "Abundance",
+                       protein_id_col_name = "^Gene\\WSymbol$",
+                       quantity_pattern = "^Abundance[\\.:]",
                        experiment_id_func = experiment_id_func,
-                       pep_n_col_name = "X..Peptides",
-                       match_n_col_name = "X..PSMs",
+                       pep_n_col_name = "\\W\\WPeptides$",
+                       match_n_col_name = "\\W\\WPSMs$",
                        silent = silent,
                        ...)
 
