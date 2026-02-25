@@ -90,17 +90,22 @@ get_pval_by_melting_point <- function(fit_tbl, comparisons = NULL){
   pval_tbl_list <- lapply(pval_tbl_list, calculate_binwise_pvalue)
   pval_tbl <- Reduce(rbind, pval_tbl_list)
 
-  # 5. Adjust with benjamini-hochberg over full sample set.
-  pval_tbl$adj_pvalue <- stats::p.adjust(pval_tbl$pvalue, "BH")
+  if(!is.null(pval_tbl)){
+    # 5. Adjust with benjamini-hochberg over full sample set.
+    pval_tbl$adj_pvalue <- stats::p.adjust(pval_tbl$pvalue, "BH")
 
-  cols_to_keep <-
-    names(pval_tbl) %in% c("Protein_ID", "Condition", "Replicate", "adj_pvalue")
-  pval_tbl <-
-    pval_tbl[cols_to_keep]
+    cols_to_keep <-
+      names(pval_tbl) %in% c("Protein_ID", "Condition", "Replicate", "adj_pvalue")
+    pval_tbl <-
+      pval_tbl[cols_to_keep]
 
-  # Merge tables
-  fit_tbl <- merge(fit_tbl, pval_tbl, all.x = TRUE)
-  fit_tbl
+    # Merge tables
+    fit_tbl <- merge(fit_tbl, pval_tbl, all.x = TRUE)
+    fit_tbl
+
+  } else {
+    fit_tbl
+  }
 }
 
 # Function to compute per-bin p-values

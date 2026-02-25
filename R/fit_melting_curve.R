@@ -106,6 +106,13 @@ fit_melting_curve <- function(data,
                               ...){
 
   if(any(is.null(protein_num), is.null(protein_total))) silent <- TRUE
+  if(!silent){
+    progress = floor(10 * protein_num / protein_total)
+    cat("\r", sprintf("%-10s", substr(data$Protein_ID[1], 1, 10)), "|",
+        strrep("=", progress), strrep(" ", 10 - progress), "| ",
+        protein_num, " of ", protein_total, sep = "")
+  }
+
 
   pre_model_data <- data.frame(x = data[[x_column]], y = data[[y_column]])
 
@@ -118,7 +125,7 @@ fit_melting_curve <- function(data,
                          "start" = c(pl = 0, a = 550, b = 10),
                          "max_attempts" = 100,
                          "lower" = c(pl = 0, a = 0.00001, b = 0.00001),
-                         "upper" = c(pl = 1.5, a = 15000, b = 250),
+                         "upper" = c(pl = 1, a = 15000, b = 250),
                          "na.action" = stats::na.omit,
                          "algorithm" = "port",
                          "control" = stats::nls.control(maxiter=50))
@@ -136,7 +143,7 @@ fit_melting_curve <- function(data,
                          "iter" = c(5,5,5),
                          "data" = pre_model_data,
                          "start_lower" = c(pl = -0.5, a = 0.00001, b = 0.00001),
-                         "start_upper" = c(pl = 1.5, a = 15000, b = 250),
+                         "start_upper" = c(pl = 1, a = 15000, b = 250),
                          "lower" = c(pl = -0.5, a = 0.00001, b = 0.00001),
                          "supp_errors" = "Y")
     nls_args <-
@@ -168,12 +175,14 @@ fit_melting_curve <- function(data,
 
   if(!silent) {
     progress = floor(10 * protein_num / protein_total)
-    cat("\r|", strrep("=", progress), strrep(" ", 10 - progress), "| ",
-        protein_num, " of ", protein_total, sep = "")
-    if(protein_num == protein_total) cat("\n")
+    if(protein_num == protein_total) {
+      cat("\r", sprintf("%-10s", substr(data$Protein_ID[1], 1, 10)),
+          "|==========| ", protein_num, " of ", protein_total, "\n", sep = "")
+    }
   }
 
   tibble::tibble(get_model_fit_stats(fit))
+
 }
 
 # Function to attempt nls fit and repeat
@@ -184,7 +193,6 @@ repeat_nls <- function(start = c(pl = 0, a = 550, b = 10),
 
   i <- 0
   repeat_fit <- TRUE
-
   while (repeat_fit){
     mod_start <- start * (1 + stats::runif(1, -0.5, 0.5))
     fit <-

@@ -207,10 +207,11 @@ normalise_TPP <- function(TPP_tbl,
   # 9. Normalise all proteins
   TPP_tbl <- merge(TPP_tbl, coeff_tbl)
   TPP_tbl$quantity <- TPP_tbl$quantity * TPP_tbl$norm_coefficient
+  n_prots <- length(unique(TPP_tbl$Protein_ID))
 
   if(!silent){
     cat("--------------------\n")
-    cat(nrow(TPP_tbl) / nrow(coeff_tbl), "proteins normalised\n")
+    cat(n_prots, "proteins normalised\n")
     cat("--------------------\n")
   }
 

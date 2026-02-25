@@ -117,9 +117,9 @@ build_melt_plot_with_model <-
                                          xend = .data$melt_point,
                                          y = 0,
                                          yend = 0.5),
-                            linetype = "dashed") +
-      ggplot2::scale_x_continuous(limits = c(min(predicted_data$Temp),
-                                             max(predicted_data$Temp)))
+                            linetype = "dashed") #+
+      # ggplot2::scale_x_continuous(limits = c(min(predicted_data$Temp),
+      #                                        max(predicted_data$Temp)))
   }
 
   # Add chosen annotations (default none)

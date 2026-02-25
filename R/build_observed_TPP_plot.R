@@ -89,7 +89,11 @@ build_observed_TPP_plot <- function(data,
     ggplot2::labs(title = "Protein Melting Curve",
                   x = "Temperature / \u00B0C",
                   y = "Fraction Non-denatured") +
-    ggplot2::scale_shape_discrete(guide = "none")
+    ggplot2::scale_shape_discrete(guide = "none") #+
+    # Sensible limits
+    ggplot2::lims(x = c(min(data$Temp, na.rm = TRUE),
+                        max(data$Temp, na.rm = TRUE)),
+                  y = c(-0.1, max(data$Temp, na.rm = TRUE) * 1.2))
   if(is.null(colour_column)) {
     melt_plot <- melt_plot + ggplot2::scale_colour_discrete(guide = "none")
   }

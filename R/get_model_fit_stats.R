@@ -21,6 +21,7 @@ get_model_fit_stats <- function(sp_fit){
       a <- fit_pars["a"]
       b <- fit_pars["b"]
       pl <- fit_pars["pl"]
+
       fit_Tm <-
         suppressWarnings(a / (b - log((1 - pl) / (0.5 - pl) - 1)))
       if(is.na(fit_Tm)) fit_Tm <- NA
@@ -101,6 +102,7 @@ get_model_fit_stats <- function(sp_fit){
                n_obs = fit_n_obs,
                log_lik = fit_log_lik,
                AICc = fit_AICc)
+
 
 }
 

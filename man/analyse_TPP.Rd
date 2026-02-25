@@ -10,6 +10,7 @@ analyse_TPP(
   quantity_column = "rel_quantity",
   control_name = "Control",
   p_value_methods = c("melting_point", "NPARC"),
+  missing_data_filter = "first_three",
   silent = FALSE,
   to_plot = FALSE,
   to_save = NULL,
@@ -88,6 +89,20 @@ of freedom for for each protein and condition comparison.
 Benjamini-Hochberg procedure to control the false discovery rate
 (\emph{FDR}).
 }}
+
+\item{missing_data_filter}{Character. One of "first_three", "all",
+or "any_three". Choice of method to filter protein melting data sets
+before curve fitting.
+\itemize{
+\item "first_three" includes all curves that include
+the first three temperature points.
+\item "all" includes only curves with no
+missing data.
+\item "any_three" includes all curves with at least three points
+at any temperature.
+}
+
+Default: "first_three"}
 
 \item{silent}{Boolean. If \code{TRUE}, no console output is shown}
 

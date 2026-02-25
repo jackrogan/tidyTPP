@@ -81,11 +81,17 @@ get_NPARC_pval <- function(TPP_tbl,
                            silent = FALSE){
 
   TPP_tbl <- mask_column(TPP_tbl, quantity_column, "quantity")
-
   # Check that quantity is given
   if(!"quantity" %in% colnames(TPP_tbl)){
     if(!silent) {
       cat("\nNo protein quantity column found, could not calculate F-scores\n")
+    }
+    NPARC_tbl <- NULL
+
+  # Check that More than one protein is given
+  } else if(length(unique(TPP_tbl$Protein_ID)) == 1){
+    if(!silent) {
+      cat("\nCannot calculate statistics from single protein results\n")
     }
     NPARC_tbl <- NULL
 
@@ -205,10 +211,13 @@ get_NPARC_pval <- function(TPP_tbl,
   if(!is.null(NPARC_tbl)){
     NPARC_tbl <- mask_column(NPARC_tbl, "quantity", quantity_column)
     tibble::as_tibble(NPARC_tbl)
-  } else {
-    TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
-    TPP_tbl
   }
+  # } else {
+  #   TPP_tbl <- mask_column(TPP_tbl, "quantity", quantity_column)
+  #   TPP_tbl
+  # }
+
+  NPARC_tbl
 }
 
 # Function to generate scaled f-score and adjusted p-value

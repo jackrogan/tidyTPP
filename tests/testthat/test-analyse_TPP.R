@@ -44,3 +44,31 @@ test_that("find_exp_stats() works for R2", {
 
   expect_equal(stat_x$min_R_sq, x$min_R_sq)
 })
+
+test_that("missing data filters work",{
+  x <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_A",]
+  x1 <-
+    x[x$Condition == "Control" & x$Replicate == "01",]
+  x2 <-
+    x[x$Condition == "Control" & x$Replicate == "02" & x$Temp %in% c(37,41,44),]
+  x3 <-
+    x[x$Condition == "Treated" & x$Replicate == "01" & x$Temp %in% c(37,50,63),]
+  x4 <-
+    x[x$Condition == "Treated" & x$Replicate == "02" & x$Temp %in% c(50),]
+
+  y <- quan_data_4prot[quan_data_4prot$Protein_ID == "Protein_B",]
+  x <- rbind(x1, x2, x3, x4, y)
+
+  get_rows <- function(filter){
+    y <- analyse_TPP(x,
+                     max_cores = 1,
+                     missing_data_filter = filter,
+                     p_value_methods = NULL,
+                     silent = TRUE)
+    nrow(y)
+  }
+
+  filter_vector <- sapply(c("first_three","all","any_three"), get_rows)
+
+  expect_equal(filter_vector, c(first_three = 53, all = 50, any_three = 56))
+})

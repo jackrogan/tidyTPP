@@ -60,6 +60,19 @@
 #'    Benjamini-Hochberg procedure to control the false discovery rate
 #'    (\emph{FDR}).
 #'
+#' @param missing_data_filter Character. One of "first_three", "all",
+#'  or "any_three". Choice of method to filter protein melting data sets
+#'  before curve fitting.
+#'
+#'  * "first_three" includes all curves that include
+#'    the first three temperature points.
+#'  * "all" includes only curves with no
+#'    missing data.
+#'  * "any_three" includes all curves with at least three points
+#'    at any temperature.
+#'
+#'  Default: "first_three"
+#'
 #' @param to_plot Boolean. If true, will generate distribution plots of
 #'  F-statistic and p-value on calculating \emph{NPARC} statistics
 #' @param to_save Character. If supplied, will generate distribution plots of
@@ -114,6 +127,7 @@ analyse_TPP <-
            quantity_column = "rel_quantity",
            control_name = "Control",
            p_value_methods = c("melting_point", "NPARC"),
+           missing_data_filter = "first_three",
            silent = FALSE,
            to_plot = FALSE,
            to_save = NULL,
@@ -128,6 +142,38 @@ analyse_TPP <-
     cat("--------------------\n")
     cat("Melting curve fit:\n")
   }
+
+  # Deal with missing data
+
+  if(!silent){
+    cat("--------------------\n")
+    cat("Filter for Missing data:\n")
+  }
+  if(missing_data_filter == "first_three"){
+    three_temps <- unique(TPP_tbl$Temp)
+    three_temps <- three_temps[order(three_temps)]
+    three_temps <- three_temps[1:3]
+    if(!silent) cat("Require first three temperatures: ", three_temps, "C\n")
+    filter_tbl <- TPP_tbl[TPP_tbl$Temp %in% three_temps,]
+    temp_num <- 3
+  } else if(missing_data_filter == "all"){
+    if(!silent) cat("Require all temperatures.\n")
+    filter_tbl <- TPP_tbl
+    temp_num <- 10
+  } else{
+    if(!silent) cat("Require three temperatures.\n")
+    temp_num <- 3
+    filter_tbl <- TPP_tbl
+  }
+
+  filter_tbl <-
+    stats::aggregate(Temp ~ Protein_ID + Condition + Replicate,
+                     filter_tbl,
+                     FUN = length)
+  filter_tbl <- filter_tbl[filter_tbl$Temp >= temp_num,]
+  filter_tbl <- filter_tbl[c("Protein_ID", "Condition", "Replicate")]
+  TPP_tbl <- merge(TPP_tbl, filter_tbl)
+  if(!silent) cat(length(unique(filter_tbl$Protein_ID)), "proteins remain.")
 
   # Get curve fits
   fit_tbl <-
@@ -200,8 +246,9 @@ analyse_TPP <-
                                       to_save = to_save,
                                       silent = silent),
                       ...)
-
-    fit_tbl <- merge(NPARC_tbl, fit_tbl, all = TRUE)
+    if(!is.null(NPARC_tbl)){
+      fit_tbl <- merge(NPARC_tbl, fit_tbl, all = TRUE)
+    }
   }
 
   # Merge tibbles for ease of passing through workflow
@@ -221,7 +268,6 @@ analyse_TPP <-
   if(!silent) cat("\nAnalysed.\n--------------------\n")
 
   tibble::as_tibble(full_tbl)
-
   }
 
 # Function to create comparison data.frame - all conditions compared to control

@@ -244,11 +244,10 @@ import_custom_format <- function(datafile,
       TPP_tbl$Sequence <- seq_col_func(TPP_tbl$Sequence)
     }
 
-
     # If peptide sequences are given, get number of peptides and number of total
     # matches. Else use total matches per protein
-
     pep_N_tbl <- TPP_tbl
+
     if(!is.null(seq_col_name)){
       pep_N_tbl$Match_N <- 0
       match_N_tbl <-
@@ -262,17 +261,17 @@ import_custom_format <- function(datafile,
       pep_N_tbl$Pep_N <- 0
       pep_N_tbl <- stats::aggregate(Pep_N ~ Protein_ID, pep_N_tbl, FUN = length)
     }
-
     # Reform data table
     TPP_tbl <- TPP_tbl[c("Protein_ID", experiment_col_name, quan_cols)]
     TPP_tbl <- merge(pep_N_tbl, TPP_tbl)
   }
   # Reduce to single protein value
-  TPP_tbl <- stats::aggregate(. ~ Protein_ID, TPP_tbl, FUN = \(x) x[1])
+  TPP_tbl <-
+    stats::aggregate(. ~ Protein_ID, TPP_tbl,
+                     FUN = \(x) x[1],
+                     na.action = stats::na.pass)
   # Drop missing protein values
   TPP_tbl <- TPP_tbl[TPP_tbl$Protein_ID != "",]
-
-
   # Transform to long format if not already
   if(table_format == "wide"){
     if(!silent) cat("Pivoting to long table...\n")
@@ -297,6 +296,10 @@ import_custom_format <- function(datafile,
   # Match to Experiment values
   if(!silent) cat("Matching to experiment config data...\n")
   TPP_tbl <- merge(config_tbl, TPP_tbl)
+
+  # Filter missing (NA) values
+  TPP_tbl <- TPP_tbl[!is.na(TPP_tbl$raw_quantity),]
+
   # Get T1 values. relative quantity
   if(!silent) cat("Finding relative quantity values...\n")
   # TODO allow user-selected reference channel label
@@ -337,7 +340,9 @@ import_custom_format <- function(datafile,
 get_quantity_relative_to_T1 <- function(TPP_tbl){
   T1_tbl <- TPP_tbl[order(TPP_tbl$Temp),]
   T1_tbl <- stats::aggregate(rel_quantity ~ Protein_ID + Condition + Replicate,
-                             T1_tbl, FUN = \(x) x[1])
+                             T1_tbl,
+                             FUN = \(x) x[1],
+                             na.action = stats::na.pass)
   colnames(T1_tbl)[4] <- "T1_quantity"
   TPP_tbl <- merge(TPP_tbl, T1_tbl)
   TPP_tbl$rel_quantity <- TPP_tbl$rel_quantity / TPP_tbl$T1_quantity
@@ -352,7 +357,6 @@ get_quantity_relative_to_reference <- function(TPP_tbl, ref_name = "Pooled"){
   TPP_tbl <- TPP_tbl[TPP_tbl$Temp != ref_name,]
   TPP_tbl <- merge(TPP_tbl, pooled_tbl)
   TPP_tbl$rel_quantity <- TPP_tbl$raw_quantity / TPP_tbl$ref_quantity
-  #TPP_tbl[colnames(TPP_tbl) != "ref_quantity"]
   TPP_tbl
 }
 

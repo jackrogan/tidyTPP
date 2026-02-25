@@ -28,7 +28,7 @@ test_that("NPARC with no quantity behaves as expected",{
                    max_cores = 1,
                    quantity_column = "rel_quantity",
                    silent = TRUE)
-  expect_equal(NPARC_x, x[1:6])
+  expect_equal(NPARC_x, NULL)
 })
 
 test_that("NPARC distribution plots save appropriately",{
